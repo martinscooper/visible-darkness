@@ -5,20 +5,49 @@ class NetworkCanvasEngine {
     this.data = [];
     this.labels = [];
     this.ss = 50.0; // scale for drawing
-    this.lix = 1;
+    this.lix = 3;
     this.d0 = 0;
     this.d1 = 1;
+    this.ctxList = [];
     // create neural net
-    this.layer_defs = [];
-    this.circleData();
+    this.spiralData();
     this.createNetwork();
   }
 
-  setCanvas(canvas) {
-    this.ctx = canvas.getContext('2d');
-    this.width = canvas.width;
-    this.height = canvas.height;
+  prepareToDraw() {
+    this.ctx = this.ctxList[0];
+    this.visctx = this.ctxList[1];
   }
+
+  addCanvas(canvas) {
+    if (!this.width) {
+      this.width = canvas.width;
+      this.height = canvas.height;
+    }
+    this.ctxList.push(canvas.getContext('2d'));
+  }
+
+  maxmin = function (w) {
+    if (w.length === 0) {
+      return {};
+    } // ... ;s
+
+    let maxv = w[0];
+    let minv = w[0];
+    let maxi = 0;
+    let mini = 0;
+    for (let i = 1; i < w.length; i += 1) {
+      if (w[i] > maxv) {
+        maxv = w[i];
+        maxi = i;
+      }
+      if (w[i] < minv) {
+        minv = w[i];
+        mini = i;
+      }
+    }
+    return { maxi: maxi, maxv: maxv, mini: mini, minv: minv, dv: maxv - minv };
+  };
 
   circleData() {
     for (let i = 0; i < 50; i += 1) {
@@ -36,9 +65,29 @@ class NetworkCanvasEngine {
     this.N = this.data.length;
   }
 
+  spiralData() {
+    this.data = [];
+    this.labels = [];
+    var n = 100;
+    for (let i = 0; i < n; i += 1) {
+      const r = (i / n) * 5 + convnetjs.randf(-0.1, 0.1);
+      const t = ((1.25 * i) / n) * 2 * Math.PI + convnetjs.randf(-0.1, 0.1);
+      this.data.push([r * Math.sin(t), r * Math.cos(t)]);
+      this.labels.push(1);
+    }
+    for (let i = 0; i < n; i += 1) {
+      const r = (i / n) * 5 + convnetjs.randf(-0.1, 0.1);
+      const t =
+        ((1.25 * i) / n) * 2 * Math.PI + Math.PI + convnetjs.randf(-0.1, 0.1);
+      this.data.push([r * Math.sin(t), r * Math.cos(t)]);
+      this.labels.push(0);
+    }
+    this.N = this.data.length;
+  }
+
   update() {
     const x = new convnetjs.Vol(1, 1, 2);
-    for (let iters = 0; iters < 20; iters += 1) {
+    for (let iters = 0; iters < 5; iters += 1) {
       for (let ix = 0; ix < this.N; ix += 1) {
         x.w = this.data[ix];
         this.trainer.train(x, this.labels[ix]);
@@ -74,6 +123,7 @@ class NetworkCanvasEngine {
   }
 
   createNetwork() {
+    this.layer_defs = [];
     this.layer_defs.push({
       type: 'input',
       out_sx: 1,
@@ -82,12 +132,12 @@ class NetworkCanvasEngine {
     });
     this.layer_defs.push({
       type: 'fc',
-      num_neurons: 6,
+      num_neurons: 12,
       activation: 'tanh',
     });
     this.layer_defs.push({
       type: 'fc',
-      num_neurons: 2,
+      num_neurons: 12,
       activation: 'tanh',
     });
     this.layer_defs.push({
@@ -147,56 +197,61 @@ class NetworkCanvasEngine {
     // draw axes
     this.drawAxis(this.width, this.height);
 
-    // // draw representation transformation axes for two neurons at some layer
-    // const mmx = convnetjs.cnnutil.maxmin(gridx);
-    // const mmy = convnetjs.cnnutil.maxmin(gridy);
-    // //visctx.clearRect(0, 0, visWIDTH, visHEIGHT);
-    // //visctx.strokeStyle = 'rgb(50,50,50)';
-    // const n = Math.floor(Math.sqrt(gridx.length)); // size of grid. Should be fine?
-    // const ng = gridx.length;
-    // visctx.beginPath();
-    // let xraw1;
-    // let yraw1;
-    // let xraw2;
-    // let yraw2;
-    // for (let x = 0; x < n; x += 1) {
-    //   for (let y = 0; y < n; y += 1) {
-    //     // down
-    //     let ix1 = x * n + y;
-    //     let ix2 = x * n + y + 1;
-    //     if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && y < n - 1) {
-    //       xraw1 = visWIDTH * ((gridx[ix1] - mmx.minv) / mmx.dv);
-    //       yraw1 = visHEIGHT * ((gridy[ix1] - mmy.minv) / mmy.dv);
-    //       xraw2 = visWIDTH * ((gridx[ix2] - mmx.minv) / mmx.dv);
-    //       yraw2 = visHEIGHT * ((gridy[ix2] - mmy.minv) / mmy.dv);
-    //       visctx.moveTo(xraw1, yraw1);
-    //       visctx.lineTo(xraw2, yraw2);
-    //     }
+    // draw representation transformation axes for two neurons at some layer
+    const mmx = this.maxmin(gridx);
+    const mmy = this.maxmin(gridy);
+    this.visctx.clearRect(0, 0, this.width, this.height);
+    //visctx.strokeStyle = 'rgb(50,50,50)';
+    const n = Math.floor(Math.sqrt(gridx.length)); // size of grid. Should be fine?
+    const ng = gridx.length;
+    this.visctx.beginPath();
+    let xraw1;
+    let yraw1;
+    let xraw2;
+    let yraw2;
+    for (let x = 0; x < n; x += 1) {
+      for (let y = 0; y < n; y += 1) {
+        // down
+        let ix1 = x * n + y;
+        let ix2 = x * n + y + 1;
+        if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && y < n - 1) {
+          xraw1 = this.width * ((gridx[ix1] - mmx.minv) / mmx.dv);
+          yraw1 = this.height * ((gridy[ix1] - mmy.minv) / mmy.dv);
+          xraw2 = this.width * ((gridx[ix2] - mmx.minv) / mmx.dv);
+          yraw2 = this.height * ((gridy[ix2] - mmy.minv) / mmy.dv);
+          this.visctx.moveTo(xraw1, yraw1);
+          this.visctx.lineTo(xraw2, yraw2);
+        }
 
-    //     // and draw its color
-    //     if (gridl[ix1]) {
-    //       visctx.fillStyle = 'rgb(250, 150, 150)';
-    //     } else {
-    //       visctx.fillStyle = 'rgb(150, 250, 150)';
-    //     }
-    //     const sz = density * gridstep;
-    //     visctx.fillRect(xraw1 - sz / 2 - 1, yraw1 - sz / 2 - 1, sz + 2, sz + 2);
+        // and draw its color
+        if (gridl[ix1]) {
+          this.visctx.fillStyle = 'rgb(250, 150, 150)';
+        } else {
+          this.visctx.fillStyle = 'rgb(150, 250, 150)';
+        }
+        const sz = density * gridstep;
+        this.visctx.fillRect(
+          xraw1 - sz / 2 - 1,
+          yraw1 - sz / 2 - 1,
+          sz + 2,
+          sz + 2,
+        );
 
-    //     // right
-    //     ix1 = (x + 1) * n + y;
-    //     ix2 = x * n + y;
+        // right
+        ix1 = (x + 1) * n + y;
+        ix2 = x * n + y;
 
-    //     if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && x < n - 1) {
-    //       xraw1 = (visWIDTH * (gridx[ix1] - mmx.minv)) / mmx.dv;
-    //       yraw1 = (visHEIGHT * (gridy[ix1] - mmy.minv)) / mmy.dv;
-    //       xraw2 = (visWIDTH * (gridx[ix2] - mmx.minv)) / mmx.dv;
-    //       yraw2 = (visHEIGHT * (gridy[ix2] - mmy.minv)) / mmy.dv;
-    //       visctx.moveTo(xraw1, yraw1);
-    //       visctx.lineTo(xraw2, yraw2);
-    //     }
-    //   }
-    // }
-    // visctx.stroke();
+        if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && x < n - 1) {
+          xraw1 = (this.width * (gridx[ix1] - mmx.minv)) / mmx.dv;
+          yraw1 = (this.height * (gridy[ix1] - mmy.minv)) / mmy.dv;
+          xraw2 = (this.width * (gridx[ix2] - mmx.minv)) / mmx.dv;
+          yraw2 = (this.height * (gridy[ix2] - mmy.minv)) / mmy.dv;
+          this.visctx.moveTo(xraw1, yraw1);
+          this.visctx.lineTo(xraw2, yraw2);
+        }
+      }
+    }
+    this.visctx.stroke();
 
     // draw datapoints.
     this.ctx.strokeStyle = 'rgb(0,0,0)';
@@ -215,24 +270,27 @@ class NetworkCanvasEngine {
       );
 
       // also draw transformed data points while we're at it
-      // [netx.w[0], netx.w[1]] = this.data[i];
-      // const xt =
-      //   (visWIDTH * (this.net.layers[this.lix].out_act.w[this.d0] - mmx.minv)) /
-      //   mmx.dv; // in screen coords
-      // const yt =
-      //   (visHEIGHT *
-      //     (this.net.layers[this.lix].out_act.w[this.d1] - mmy.minv)) /
-      //   mmy.dv; // in screen coords
-      // if (this.labels[i] === 1) {
-      //   visctx.fillStyle = 'rgb(100,200,100)';
-      // } else {
-      //   visctx.fillStyle = 'rgb(200,100,100)';
-      // }
-      // visctx.beginPath();
-      // visctx.arc(xt, yt, 5.0, 0, Math.PI * 2, true);
-      // visctx.closePath();
-      // visctx.stroke();
-      // visctx.fill();
+      [netx.w[0], netx.w[1]] = this.data[i];
+      var a = this.net.forward(netx, false);
+
+      const xt =
+        (this.width *
+          (this.net.layers[this.lix].out_act.w[this.d0] - mmx.minv)) /
+        mmx.dv; // in screen coords
+      const yt =
+        (this.height *
+          (this.net.layers[this.lix].out_act.w[this.d1] - mmy.minv)) /
+        mmy.dv; // in screen coords
+      if (this.labels[i] === 1) {
+        this.visctx.fillStyle = 'rgb(100,200,100)';
+      } else {
+        this.visctx.fillStyle = 'rgb(200,100,100)';
+      }
+      this.visctx.beginPath();
+      this.visctx.arc(xt, yt, 5.0, 0, Math.PI * 2, true);
+      this.visctx.closePath();
+      this.visctx.stroke();
+      this.visctx.fill();
     }
   }
 }

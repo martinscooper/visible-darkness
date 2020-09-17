@@ -1,22 +1,20 @@
 import { useRef, useEffect } from 'react';
-import { Card } from 'reactstrap';
+
 const useCanvas = (draw, nce) => {
   const canvasRef = useRef(null);
+  const canvasTransRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    const canvasTrans = canvasTransRef.current;
     // const context = canvas.getContext('2d');
     //  let frameCount = 0;
     let animationFrameId;
 
-    nce.setCanvas(canvas);
+    nce.addCanvas(canvas);
+    nce.addCanvas(canvasTrans);
+    nce.prepareToDraw();
 
-    // const render = () => {
-    //   frameCount += 1;
-    //   draw(context, frameCount);
-    //   animationFrameId = window.requestAnimationFrame(render);
-    // };
-    // render();
     const render = () => {
       nce.draw();
       animationFrameId = window.requestAnimationFrame(render);
@@ -28,7 +26,7 @@ const useCanvas = (draw, nce) => {
     };
   }, [draw]);
 
-  return canvasRef;
+  return { canvasRef, canvasTransRef };
 };
 
 export default useCanvas;
