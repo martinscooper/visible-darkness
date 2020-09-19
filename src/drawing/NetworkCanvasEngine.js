@@ -14,17 +14,13 @@ class NetworkCanvasEngine {
     this.createNetwork();
   }
 
-  prepareToDraw() {
-    this.ctx = this.ctxList[0];
-    this.visctx = this.ctxList[1];
-  }
-
-  addCanvas(canvas) {
-    if (!this.width) {
-      this.width = canvas.width;
-      this.height = canvas.height;
-    }
-    this.ctxList.push(canvas.getContext('2d'));
+  prepareToDraw(canvasArr) {
+    const firstCanvas = canvasArr[0];
+    this.width = firstCanvas.width;
+    this.height = firstCanvas.height;
+    const ctxList = canvasArr.map((canvas) => canvas.current.getContext('2d'));
+    [this.ctx, ...this.visCtxList] = ctxList;
+    this.nbLayers = this.visCtxList.length;
   }
 
   maxmin = function (w) {
@@ -86,13 +82,17 @@ class NetworkCanvasEngine {
   }
 
   update() {
+    //const start = new Date().getTime();
+
     const x = new convnetjs.Vol(1, 1, 2);
-    for (let iters = 0; iters < 5; iters += 1) {
+    for (let iters = 0; iters < 20; iters += 1) {
       for (let ix = 0; ix < this.N; ix += 1) {
         x.w = this.data[ix];
         this.trainer.train(x, this.labels[ix]);
       }
     }
+    //const end = new Date().getTime();
+    //alert(end - start);
   }
 
   drawCircle(x, y, r) {
@@ -124,28 +124,14 @@ class NetworkCanvasEngine {
 
   createNetwork() {
     this.layer_defs = [];
-    this.layer_defs.push({
-      type: 'input',
-      out_sx: 1,
-      out_sy: 1,
-      out_depth: 2,
-    });
-    this.layer_defs.push({
-      type: 'fc',
-      num_neurons: 12,
-      activation: 'tanh',
-    });
-    this.layer_defs.push({
-      type: 'fc',
-      num_neurons: 12,
-      activation: 'tanh',
-    });
-    this.layer_defs.push({
-      type: 'softmax',
-      num_classes: 2,
-    });
+    this.layer_defs.push({ type: 'input', out_sx: 1, out_sy: 1, out_depth: 2 });
+    this.layer_defs.push({ type: 'fc', num_neurons: 6, activation: 'tanh' });
+    this.layer_defs.push({ type: 'fc', num_neurons: 2, activation: 'tanh' });
+    this.layer_defs.push({ type: 'softmax', num_classes: 2 });
+
     this.net = new convnetjs.Net();
     this.net.makeLayers(this.layer_defs);
+
     this.trainer = new convnetjs.SGDTrainer(this.net, {
       learning_rate: 0.01,
       momentum: 0.1,
@@ -156,12 +142,15 @@ class NetworkCanvasEngine {
 
   draw() {
     this.ctx.clearRect(0, 0, this.width, this.height);
-    this.update();
+    this.visCtxList.forEach((visctx) =>
+      visctx.clearRect(0, 0, this.width, this.height),
+    );
+
     const netx = new convnetjs.Vol(1, 1, 2);
     const density = 5.0;
-    const gridstep = 2;
-    const gridx = [];
-    const gridy = [];
+    const gridstep = 3;
+    const gridx = new Array(this.nbLayers).fill([]);
+    const gridy = new Array(this.nbLayers).fill([]);
     const gridl = [];
     for (let x = 0.0, cx = 0; x <= this.width; x += density, cx += 1) {
       for (let y = 0.0, cy = 0; y <= this.height; y += density, cy += 1) {
@@ -182,14 +171,15 @@ class NetworkCanvasEngine {
           density + 2,
           density + 2,
         );
-
         if (cx % gridstep === 0 && cy % gridstep === 0) {
           // record the transformation information
-          const xt = this.net.layers[this.lix].out_act.w[this.d0]; // in screen coords
-          const yt = this.net.layers[this.lix].out_act.w[this.d1]; // in screen coords
-          gridx.push(xt);
-          gridy.push(yt);
-          gridl.push(a.w[0] > a.w[1]); // remember final label as well
+          for (let i = 0; i < this.nbLayers; i += 1) {
+            const xt = this.net.layers[i].out_act.w[this.d0]; // in screen coords
+            const yt = this.net.layers[i].out_act.w[this.d1]; // in screen coords
+            gridx[i].push(xt);
+            gridy[i].push(yt);
+            gridl.push(a.w[0] > a.w[1]); // remember final label as well
+          }
         }
       }
     }
@@ -198,13 +188,16 @@ class NetworkCanvasEngine {
     this.drawAxis(this.width, this.height);
 
     // draw representation transformation axes for two neurons at some layer
-    const mmx = this.maxmin(gridx);
-    const mmy = this.maxmin(gridy);
-    this.visctx.clearRect(0, 0, this.width, this.height);
+    let mmx = [];
+    let mmy = [];
+    for (let i = 0; i < this.nbLayers; i += 1) {
+      mmx.push(this.maxmin(gridx[i]));
+      mmy.push(this.maxmin(gridy[i]));
+    }
     //visctx.strokeStyle = 'rgb(50,50,50)';
-    const n = Math.floor(Math.sqrt(gridx.length)); // size of grid. Should be fine?
-    const ng = gridx.length;
-    this.visctx.beginPath();
+    const n = Math.floor(Math.sqrt(gridx[0].length)); // size of grid. Should be fine?
+    const ng = gridx[0].length;
+    this.visCtxList.forEach((visctx) => visctx.beginPath());
     let xraw1;
     let yraw1;
     let xraw2;
@@ -213,14 +206,16 @@ class NetworkCanvasEngine {
       for (let y = 0; y < n; y += 1) {
         // down
         let ix1 = x * n + y;
-        let ix2 = x * n + y + 1;
+        let ix2 = ix1 + 1;
         if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && y < n - 1) {
-          xraw1 = this.width * ((gridx[ix1] - mmx.minv) / mmx.dv);
-          yraw1 = this.height * ((gridy[ix1] - mmy.minv) / mmy.dv);
-          xraw2 = this.width * ((gridx[ix2] - mmx.minv) / mmx.dv);
-          yraw2 = this.height * ((gridy[ix2] - mmy.minv) / mmy.dv);
-          this.visctx.moveTo(xraw1, yraw1);
-          this.visctx.lineTo(xraw2, yraw2);
+          for (let i = 0; i < this.nbLayers; i += 1) {
+            xraw1 = this.width * ((gridx[i][ix1] - mmx[i].minv) / mmx[i].dv);
+            yraw1 = this.height * ((gridy[i][ix1] - mmy[i].minv) / mmy[i].dv);
+            xraw2 = this.width * ((gridx[i][ix2] - mmx[i].minv) / mmx[i].dv);
+            yraw2 = this.height * ((gridy[i][ix2] - mmy[i].minv) / mmy[i].dv);
+            this.visCtxList[i].moveTo(xraw1, yraw1);
+            this.visCtxList[i].lineTo(xraw2, yraw2);
+          }
         }
 
         // and draw its color
@@ -242,16 +237,18 @@ class NetworkCanvasEngine {
         ix2 = x * n + y;
 
         if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && x < n - 1) {
-          xraw1 = (this.width * (gridx[ix1] - mmx.minv)) / mmx.dv;
-          yraw1 = (this.height * (gridy[ix1] - mmy.minv)) / mmy.dv;
-          xraw2 = (this.width * (gridx[ix2] - mmx.minv)) / mmx.dv;
-          yraw2 = (this.height * (gridy[ix2] - mmy.minv)) / mmy.dv;
-          this.visctx.moveTo(xraw1, yraw1);
-          this.visctx.lineTo(xraw2, yraw2);
+          for (let i = 0; i < this.nbLayers; i += 1) {
+            xraw1 = (this.width * (gridx[i][ix1] - mmx[i].minv)) / mmx[i].dv;
+            yraw1 = (this.height * (gridy[i][ix1] - mmy[i].minv)) / mmy[i].dv;
+            xraw2 = (this.width * (gridx[i][ix2] - mmx[i].minv)) / mmx[i].dv;
+            yraw2 = (this.height * (gridy[i][ix2] - mmy[i].minv)) / mmy[i].dv;
+            this.visCtxList[i].moveTo(xraw1, yraw1);
+            this.visCtxList[i].lineTo(xraw2, yraw2);
+          }
         }
       }
     }
-    this.visctx.stroke();
+    this.visCtxList.forEach((visctx) => visctx.stroke());
 
     // draw datapoints.
     this.ctx.strokeStyle = 'rgb(0,0,0)';
@@ -273,24 +270,25 @@ class NetworkCanvasEngine {
       [netx.w[0], netx.w[1]] = this.data[i];
       var a = this.net.forward(netx, false);
 
-      const xt =
-        (this.width *
-          (this.net.layers[this.lix].out_act.w[this.d0] - mmx.minv)) /
-        mmx.dv; // in screen coords
-      const yt =
-        (this.height *
-          (this.net.layers[this.lix].out_act.w[this.d1] - mmy.minv)) /
-        mmy.dv; // in screen coords
-      if (this.labels[i] === 1) {
-        this.visctx.fillStyle = 'rgb(100,200,100)';
-      } else {
-        this.visctx.fillStyle = 'rgb(200,100,100)';
+      for (let i = 0; i < this.nbLayers; i += 1) {
+        const xt =
+          (this.width * (this.net.layers[i].out_act.w[this.d0] - mmx[i].minv)) /
+          mmx.dv; // in screen coords
+        const yt =
+          (this.height *
+            (this.net.layers[i].out_act.w[this.d1] - mmy[i].minv)) /
+          mmy.dv; // in screen coords
+        if (this.labels[i] === 1) {
+          this.visCtxList[i].fillStyle = 'rgb(100,200,100)';
+        } else {
+          this.visCtxList[i].fillStyle = 'rgb(200,100,100)';
+        }
+        this.visCtxList[i].beginPath();
+        this.visCtxList[i].arc(xt, yt, 5.0, 0, Math.PI * 2, true);
+        this.visCtxList[i].closePath();
+        this.visCtxList[i].stroke();
+        this.visCtxList[i].fill();
       }
-      this.visctx.beginPath();
-      this.visctx.arc(xt, yt, 5.0, 0, Math.PI * 2, true);
-      this.visctx.closePath();
-      this.visctx.stroke();
-      this.visctx.fill();
     }
   }
 }
