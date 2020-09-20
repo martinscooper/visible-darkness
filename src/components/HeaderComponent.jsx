@@ -45,7 +45,7 @@ const Header = () => {
           </Collapse>
         </div>
       </Navbar>
-      <Jumbotron>
+      <Jumbotron className='jumbotron'>
         <div className='container'>
           <div className='row row-header'>
             <div className='col-12 col-sm-6'>
@@ -56,13 +56,7 @@ const Header = () => {
                 nec molestie elit. Aenean lacinia vel nibh sit amet malesuada.
                 Fusce lobortis lectus metus, eu gravida purus mattis non.
                 Phasellus convallis porttitor ipsum viverra rhoncus. Nunc
-                egestas congue felis at finibus. In gravida, erat ut efficitur
-                pulvinar, ipsum erat tristique libero, eu placerat arcu magna a
-                sem. Vestibulum commodo enim mauris, in imperdiet lorem
-                consectetur ut. Fusce ultrices semper metus sollicitudin
-                eleifend. Phasellus mi quam, ornare ut vestibulum consectetur,
-                luctus quis tortor. Nullam ac justo massa. In sed ultricies
-                orci.
+                egestas congue felis at finibus.
               </p>
             </div>
           </div>

@@ -8,17 +8,32 @@ import {
   CardTitle,
   Button,
 } from 'reactstrap';
-import PropTypes from 'prop-types';
+import NetworkCanvasEngine from '../drawing/NetworkCanvasEngine';
 
 const Canvas = (props) => {
   const { nce } = props;
 
   const [nbLayers, setNbLayers] = useState(1);
-  const canvasRefs = new Array(nbLayers + 1).fill(useRef(null));
+  //const [canvasRefs, setCanvasRefs] = useState([]);
+
+  const addLayer = () => {
+    if (nce.getNbLayers() - 1 > nbLayers) {
+      setNbLayers((prev) => prev + 1);
+    }
+  };
+
+  const canvasRefs = Array(nbLayers)
+    .fill()
+    .map((x) => createRef());
+  const pplalCanvas = createRef();
 
   useEffect(() => {
     let animationFrameId;
-    nce.prepareToDraw(canvasRefs);
+    // setCanvasRefs((refs) => Array(nbLayers).fill(createRef()));
+
+    //alert(`the size is: ${canvasRefs.length} and nbLayers is: ${nbLayers}`);
+    nce.prepareToDraw(pplalCanvas, canvasRefs);
+    //alert('inside useEffect but not in loop');
     const render = () => {
       nce.update();
       nce.draw();
@@ -29,17 +44,17 @@ const Canvas = (props) => {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [nbLayers]);
 
-  const canvasComps = canvasRefs.slice(1).map((canvasRef, index) => {
+  const canvasComps = canvasRefs.map((ref, i) => {
     return (
-      <Col md={6}>
+      <Col sm={6} md={4}>
         <Card>
           <CardTitle>
-            <h2> Layer nb {index + 1}</h2>
+            <h2> Layer nb {i + 1}</h2>
           </CardTitle>
           <CardBody>
-            <canvas style={{ width: '100%', height: '100%' }} ref={canvasRef} />
+            <canvas width='200' height='200' ref={ref} />
           </CardBody>
         </Card>
       </Col>
@@ -48,24 +63,21 @@ const Canvas = (props) => {
   // TODO: force canvas to depend on parent grid size
   return (
     <Container>
-      <Row>
+      <Row className='row-content'>
         <Col>
-          <Button onClick={() => setNbLayers((prevState) => prevState + 1)}>
+          <Button color='primary' onClick={addLayer}>
             Add layer
           </Button>
         </Col>
       </Row>
       <Row>
-        <Col md={6}>
+        <Col sm={6} md={4}>
           <Card>
             <CardTitle>
               <h2>Network input</h2>
             </CardTitle>
             <CardBody>
-              <canvas
-                style={{ width: '100%', height: '100%' }}
-                ref={canvasRefs[0]}
-              />
+              <canvas width='200' height='200' ref={pplalCanvas} />
             </CardBody>
           </Card>
         </Col>

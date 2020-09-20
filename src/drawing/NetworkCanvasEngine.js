@@ -4,23 +4,23 @@ class NetworkCanvasEngine {
   constructor() {
     this.data = [];
     this.labels = [];
-    this.ss = 50.0; // scale for drawing
+    this.ss = 16.0; // scale for drawing
     this.lix = 3;
     this.d0 = 0;
     this.d1 = 1;
-    this.ctxList = [];
     // create neural net
     this.spiralData();
     this.createNetwork();
   }
 
-  prepareToDraw(canvasArr) {
-    const firstCanvas = canvasArr[0];
-    this.width = firstCanvas.width;
-    this.height = firstCanvas.height;
-    const ctxList = canvasArr.map((canvas) => canvas.current.getContext('2d'));
-    [this.ctx, ...this.visCtxList] = ctxList;
-    this.nbLayers = this.visCtxList.length;
+  prepareToDraw(pplalCanvas, layerCanvasRefs) {
+    this.width = pplalCanvas.current.width;
+    this.height = pplalCanvas.current.height;
+    this.ctx = pplalCanvas.current.getContext('2d');
+    this.visCtxArray = layerCanvasRefs.map((canvas) => {
+      return canvas.current.getContext('2d');
+    });
+    this.nbLayers = this.visCtxArray.length;
   }
 
   maxmin = function (w) {
@@ -82,7 +82,7 @@ class NetworkCanvasEngine {
   }
 
   update() {
-    //const start = new Date().getTime();
+    const start = new Date().getTime();
 
     const x = new convnetjs.Vol(1, 1, 2);
     for (let iters = 0; iters < 20; iters += 1) {
@@ -91,7 +91,7 @@ class NetworkCanvasEngine {
         this.trainer.train(x, this.labels[ix]);
       }
     }
-    //const end = new Date().getTime();
+    const end = new Date().getTime();
     //alert(end - start);
   }
 
@@ -111,15 +111,19 @@ class NetworkCanvasEngine {
     this.ctx.stroke();
   }
 
-  drawAxis(WIDTH, HEIGHT) {
+  drawAxis() {
     this.ctx.beginPath();
     this.ctx.strokeStyle = 'rgb(50,50,50)';
     this.ctx.lineWidth = 1;
-    this.ctx.moveTo(0, HEIGHT / 2);
-    this.ctx.lineTo(WIDTH, HEIGHT / 2);
-    this.ctx.moveTo(WIDTH / 2, 0);
-    this.ctx.lineTo(WIDTH / 2, HEIGHT);
+    this.ctx.moveTo(0, this.height / 2);
+    this.ctx.lineTo(this.width, this.height / 2);
+    this.ctx.moveTo(this.width / 2, 0);
+    this.ctx.lineTo(this.width / 2, this.height);
     this.ctx.stroke();
+  }
+
+  getNbLayers() {
+    return this.net.layers.length;
   }
 
   createNetwork() {
@@ -141,14 +145,15 @@ class NetworkCanvasEngine {
   }
 
   draw() {
+    //clear canvas
     this.ctx.clearRect(0, 0, this.width, this.height);
-    this.visCtxList.forEach((visctx) =>
+    this.visCtxArray.forEach((visctx) =>
       visctx.clearRect(0, 0, this.width, this.height),
     );
 
     const netx = new convnetjs.Vol(1, 1, 2);
-    const density = 5.0;
-    const gridstep = 3;
+    const density = 4.0;
+    const gridstep = 2;
     const gridx = new Array(this.nbLayers).fill([]);
     const gridy = new Array(this.nbLayers).fill([]);
     const gridl = [];
@@ -171,11 +176,12 @@ class NetworkCanvasEngine {
           density + 2,
           density + 2,
         );
+
         if (cx % gridstep === 0 && cy % gridstep === 0) {
           // record the transformation information
           for (let i = 0; i < this.nbLayers; i += 1) {
-            const xt = this.net.layers[i].out_act.w[this.d0]; // in screen coords
-            const yt = this.net.layers[i].out_act.w[this.d1]; // in screen coords
+            const xt = this.net.layers[i + 1].out_act.w[this.d0]; // in screen coords
+            const yt = this.net.layers[i + 1].out_act.w[this.d1]; // in screen coords
             gridx[i].push(xt);
             gridy[i].push(yt);
             gridl.push(a.w[0] > a.w[1]); // remember final label as well
@@ -185,7 +191,7 @@ class NetworkCanvasEngine {
     }
 
     // draw axes
-    this.drawAxis(this.width, this.height);
+    this.drawAxis();
 
     // draw representation transformation axes for two neurons at some layer
     let mmx = [];
@@ -194,61 +200,72 @@ class NetworkCanvasEngine {
       mmx.push(this.maxmin(gridx[i]));
       mmy.push(this.maxmin(gridy[i]));
     }
-    //visctx.strokeStyle = 'rgb(50,50,50)';
-    const n = Math.floor(Math.sqrt(gridx[0].length)); // size of grid. Should be fine?
-    const ng = gridx[0].length;
-    this.visCtxList.forEach((visctx) => visctx.beginPath());
-    let xraw1;
-    let yraw1;
-    let xraw2;
-    let yraw2;
-    for (let x = 0; x < n; x += 1) {
-      for (let y = 0; y < n; y += 1) {
-        // down
-        let ix1 = x * n + y;
-        let ix2 = ix1 + 1;
-        if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && y < n - 1) {
-          for (let i = 0; i < this.nbLayers; i += 1) {
-            xraw1 = this.width * ((gridx[i][ix1] - mmx[i].minv) / mmx[i].dv);
-            yraw1 = this.height * ((gridy[i][ix1] - mmy[i].minv) / mmy[i].dv);
-            xraw2 = this.width * ((gridx[i][ix2] - mmx[i].minv) / mmx[i].dv);
-            yraw2 = this.height * ((gridy[i][ix2] - mmy[i].minv) / mmy[i].dv);
-            this.visCtxList[i].moveTo(xraw1, yraw1);
-            this.visCtxList[i].lineTo(xraw2, yraw2);
-          }
-        }
 
-        // and draw its color
-        if (gridl[ix1]) {
-          this.visctx.fillStyle = 'rgb(250, 150, 150)';
-        } else {
-          this.visctx.fillStyle = 'rgb(150, 250, 150)';
-        }
-        const sz = density * gridstep;
-        this.visctx.fillRect(
-          xraw1 - sz / 2 - 1,
-          yraw1 - sz / 2 - 1,
-          sz + 2,
-          sz + 2,
-        );
+    if (this.nbLayers > 0) {
+      //visctx.strokeStyle = 'rgb(50,50,50)';
+      const n = Math.floor(Math.sqrt(gridx[0].length)); // size of grid. Should be fine?
+      const ng = gridx[0].length;
+      this.visCtxArray.forEach((visctx) => visctx.beginPath());
+      let xraw1;
+      let yraw1;
+      let xraw2;
+      let yraw2;
+      for (let i = 0; i < this.nbLayers; i += 1) {
+        for (let x = 0; x < n; x += 1) {
+          for (let y = 0; y < n; y += 1) {
+            // down
+            let ix1 = x * n + y;
+            let ix2 = x * n + 1;
+            if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && y < n - 1) {
+              xraw1 = this.width * ((gridx[i][ix1] - mmx[i].minv) / mmx[i].dv);
+              yraw1 = this.height * ((gridy[i][ix1] - mmy[i].minv) / mmy[i].dv);
+              xraw2 = this.width * ((gridx[i][ix2] - mmx[i].minv) / mmx[i].dv);
+              yraw2 = this.height * ((gridy[i][ix2] - mmy[i].minv) / mmy[i].dv);
+              this.visCtxArray[i].moveTo(xraw1, yraw1);
+              this.visCtxArray[i].lineTo(xraw2, yraw2);
+            }
 
-        // right
-        ix1 = (x + 1) * n + y;
-        ix2 = x * n + y;
+            // and draw its color
+            if (gridl[ix1]) {
+              this.visCtxArray[i].fillStyle = `rgb(250, ${i * 70},${
+                200 - i * 40
+              })`;
+            } else {
+              this.visCtxArray[i].fillStyle = `rgb(150, ${i * 70},${
+                256 - i * 40
+              })`;
+            }
+            const sz = density * gridstep;
+            this.visCtxArray[i].fillRect(
+              xraw1 - sz / 2 - 1,
+              yraw1 - sz / 2 - 1,
+              sz + 2,
+              sz + 2,
+            );
 
-        if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && x < n - 1) {
-          for (let i = 0; i < this.nbLayers; i += 1) {
-            xraw1 = (this.width * (gridx[i][ix1] - mmx[i].minv)) / mmx[i].dv;
-            yraw1 = (this.height * (gridy[i][ix1] - mmy[i].minv)) / mmy[i].dv;
-            xraw2 = (this.width * (gridx[i][ix2] - mmx[i].minv)) / mmx[i].dv;
-            yraw2 = (this.height * (gridy[i][ix2] - mmy[i].minv)) / mmy[i].dv;
-            this.visCtxList[i].moveTo(xraw1, yraw1);
-            this.visCtxList[i].lineTo(xraw2, yraw2);
+            // right
+            ix1 = (x + 1) * n + y;
+            ix2 = x * n + y;
+
+            if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && x < n - 1) {
+              for (let i = 0; i < this.nbLayers; i += 1) {
+                xraw1 =
+                  (this.width * (gridx[i][ix1] - mmx[i].minv)) / mmx[i].dv;
+                yraw1 =
+                  (this.height * (gridy[i][ix1] - mmy[i].minv)) / mmy[i].dv;
+                xraw2 =
+                  (this.width * (gridx[i][ix2] - mmx[i].minv)) / mmx[i].dv;
+                yraw2 =
+                  (this.height * (gridy[i][ix2] - mmy[i].minv)) / mmy[i].dv;
+                this.visCtxArray[i].moveTo(xraw1, yraw1);
+                this.visCtxArray[i].lineTo(xraw2, yraw2);
+              }
+            }
           }
         }
       }
+      this.visCtxArray.forEach((visctx) => visctx.stroke());
     }
-    this.visCtxList.forEach((visctx) => visctx.stroke());
 
     // draw datapoints.
     this.ctx.strokeStyle = 'rgb(0,0,0)';
@@ -273,21 +290,21 @@ class NetworkCanvasEngine {
       for (let i = 0; i < this.nbLayers; i += 1) {
         const xt =
           (this.width * (this.net.layers[i].out_act.w[this.d0] - mmx[i].minv)) /
-          mmx.dv; // in screen coords
+          mmx[i].dv; // in screen coords
         const yt =
           (this.height *
             (this.net.layers[i].out_act.w[this.d1] - mmy[i].minv)) /
-          mmy.dv; // in screen coords
+          mmy[i].dv; // in screen coords
         if (this.labels[i] === 1) {
-          this.visCtxList[i].fillStyle = 'rgb(100,200,100)';
+          this.visCtxArray[i].fillStyle = 'rgb(100,200,100)';
         } else {
-          this.visCtxList[i].fillStyle = 'rgb(200,100,100)';
+          this.visCtxArray[i].fillStyle = 'rgb(200,100,100)';
         }
-        this.visCtxList[i].beginPath();
-        this.visCtxList[i].arc(xt, yt, 5.0, 0, Math.PI * 2, true);
-        this.visCtxList[i].closePath();
-        this.visCtxList[i].stroke();
-        this.visCtxList[i].fill();
+        this.visCtxArray[i].beginPath();
+        this.visCtxArray[i].arc(xt, yt, 5.0, 0, Math.PI * 2, true);
+        this.visCtxArray[i].closePath();
+        this.visCtxArray[i].stroke();
+        this.visCtxArray[i].fill();
       }
     }
   }
