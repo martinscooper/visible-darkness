@@ -71,7 +71,7 @@ const Canvas = (props) => {
 
   const canvasComps = new Array(nbLayers).fill().map((i, j) => {
     return (
-      <Col sm={6} md={3} className='mt-3'>
+      <Col sm={6} md={4} className='mt-3'>
         <Card className='text-center'>
           <CardTitle className='mb-0'>
             {layerTypes[j]} layer ({j + 1})
@@ -91,38 +91,90 @@ const Canvas = (props) => {
   // TODO: force canvas to depend on parent grid size
   return (
     <Container>
-      <Row className='mt-3'>
-        <Col>
-          <Button color='primary' onClick={addLayer}>
-            Add layer
-          </Button>
+      <Row>
+        <Col md={10}>
+          <Row>
+            <Col>
+              <Card className='text-center'>
+                <CardTitle>
+                  <h2>Network input</h2>
+                </CardTitle>
+                <CardBody>
+                  <canvas width='200' height='200' ref={ppalCanvas} />
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+          <Row>{nbLayers > 0 ? canvasComps : null}</Row>
         </Col>
-        <Col>
-          <Button color='primary' onClick={removeLayer}>
-            Remove layer
-          </Button>
-        </Col>
-        <Col>
-          <Button color='danger' onClick={() => nce.reload()}>
-            Reload
-          </Button>
+        <Col md={2}>
+          <Row>
+            <Col md>
+              <Button className='m-1' color='primary' onClick={addLayer}>
+                Add layer
+              </Button>
+            </Col>
+            <Col md>
+              <Button className='m-1' color='primary' onClick={removeLayer}>
+                Remove layer
+              </Button>
+            </Col>
+            <Col md>
+              <Button
+                className='m-1'
+                color='primary'
+                onClick={() => nce.cycleAll()}
+              >
+                Cycle all
+              </Button>
+            </Col>
+            <Col>
+              <Button
+                className='m-1'
+                color='danger'
+                onClick={() => nce.reload()}
+              >
+                Reload
+              </Button>
+            </Col>
+          </Row>
         </Col>
       </Row>
-      <Row className='mt-3'>
-        <Col sm={6} md={{ size: 4, offset: 4 }}>
-          <Card className='text-center'>
-            <CardTitle>
-              <h2>Network input</h2>
-            </CardTitle>
-            <CardBody>
-              <canvas width='200' height='200' ref={ppalCanvas} />
-            </CardBody>
-          </Card>
-        </Col>
-      </Row>
-      <Row>{nbLayers > 0 ? canvasComps : null}</Row>
     </Container>
   );
+  //   <Container>
+  //     <Row className='mt-3'>
+  //       <Col>
+  //         <Button color='primary' onClick={addLayer}>
+  //           Add layer
+  //         </Button>
+  //       </Col>
+  //       <Col>
+  //         <Button color='primary' onClick={removeLayer}>
+  //           Remove layer
+  //         </Button>
+  //       </Col>
+  //       <Col>
+  //         <Button color='danger' onClick={() => nce.reload()}>
+  //           Reload
+  //         </Button>
+  //       </Col>
+  //     </Row>
+  //     <Row className='mt-3'>
+  //       <Col sm={6} md={{ size: 4, offset: 4 }}>
+  //         <Card className='text-center'>
+  //           <CardTitle>
+  //             <h2>Network input</h2>
+  //           </CardTitle>
+  //           <CardBody>
+  //             <canvas width='200' height='200' ref={ppalCanvas} />
+  //           </CardBody>
+  //         </Card>
+  //       </Col>
+  //     </Row>
+  //     <Row>{nbLayers > 0 ? canvasComps : null}</Row>
+  //   </Container>
+  // );
 };
 
 export default Canvas;

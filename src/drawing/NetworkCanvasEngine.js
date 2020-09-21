@@ -68,6 +68,13 @@ class NetworkCanvasEngine {
     if (this.d0[layer] >= selected_layer.out_depth) this.d0[layer] = 0; // and wrap
   }
 
+  cycleAll() {
+    for (let i = 0; i < this.nbLayers; i += 1) {
+      this.cycle(i);
+    }
+    this.reload();
+  }
+
   circleData() {
     for (let i = 0; i < 50; i += 1) {
       const r = convnetjs.randf(0.0, 2.0);
@@ -159,7 +166,7 @@ class NetworkCanvasEngine {
     this.net.makeLayers(this.layer_defs);
 
     this.trainer = new convnetjs.SGDTrainer(this.net, {
-      learning_rate: 0.01,
+      learning_rate: 0.005,
       momentum: 0.1,
       batch_size: 10,
       l2_decay: 0.001,
