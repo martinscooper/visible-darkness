@@ -11,10 +11,10 @@ import {
 
 // TODO: make canvas responsive and square
 // TODO: add layer names a types
-// TODO:
-// TODO:
-// TODO:
-// TODO:
+// TODO: add select activation options
+// TODO: add learning rate bar
+// TODO: add loss show
+// TODO: add different datasets
 
 const Canvas = (props) => {
   const { nce } = props;
