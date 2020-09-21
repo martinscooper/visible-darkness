@@ -11,13 +11,20 @@ class NetworkCanvasEngine {
     // create neural net
     this.spiralData();
     this.createNetwork();
+    this.ctx = null;
+    this.layerCanvasRefs = null;
   }
 
-  prepareToDraw(pplalCanvas, layerCanvasRefs) {
-    this.width = pplalCanvas.current.width;
-    this.height = pplalCanvas.current.height;
-    this.ctx = pplalCanvas.current.getContext('2d');
-    this.visCtxArray = layerCanvasRefs.map((canvas) => {
+  prepareToDraw(ppalCanvas, layerCanvasRefs) {
+    this.width = ppalCanvas.current.width;
+    this.height = ppalCanvas.current.height;
+    //alert(ppalCanvas.current.width);
+    this.ctx = ppalCanvas.current.getContext('2d');
+    this.layerCanvasRefs = layerCanvasRefs;
+  }
+
+  updateRefs() {
+    this.visCtxArray = this.layerCanvasRefs.current.map((canvas) => {
       return canvas.current.getContext('2d');
     });
     this.nbLayers = this.visCtxArray.length;
@@ -95,20 +102,20 @@ class NetworkCanvasEngine {
     //alert(end - start);
   }
 
-  drawCircle(x, y, r) {
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, r, 0, Math.PI * 2, true);
-    this.ctx.closePath();
-    this.ctx.stroke();
-    this.ctx.fill();
+  drawCircle(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
   }
 
-  drawRect(x, y, w, h) {
-    this.ctx.beginPath();
-    this.ctx.rect(x, y, w, h);
-    this.ctx.closePath();
-    this.ctx.fill();
-    this.ctx.stroke();
+  drawRect(ctx, x, y, w, h) {
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   }
 
   drawAxis() {
@@ -144,6 +151,10 @@ class NetworkCanvasEngine {
     });
   }
 
+  reload() {
+    this.createNetwork();
+  }
+
   draw() {
     //clear canvas
     this.ctx.clearRect(0, 0, this.width, this.height);
@@ -152,8 +163,8 @@ class NetworkCanvasEngine {
     );
 
     const netx = new convnetjs.Vol(1, 1, 2);
-    const density = 4.0;
-    const gridstep = 2;
+    const density = 5.0;
+    const gridstep = 3;
     const gridx = new Array(this.nbLayers).fill([]);
     const gridy = new Array(this.nbLayers).fill([]);
     const gridl = [];
@@ -162,7 +173,6 @@ class NetworkCanvasEngine {
         netx.w[0] = (x - this.width / 2) / this.ss;
         netx.w[1] = (y - this.height / 2) / this.ss;
         const a = this.net.forward(netx, false);
-
         //  if (a.w[0] > a.w[1]) ctx.fillStyle = "rgb(250, 150, 150)";
         //  else ctx.fillStyle = "rgb(150, 250, 150)";
 
@@ -179,11 +189,12 @@ class NetworkCanvasEngine {
 
         if (cx % gridstep === 0 && cy % gridstep === 0) {
           // record the transformation information
-          for (let i = 0; i < this.nbLayers; i += 1) {
-            const xt = this.net.layers[i + 1].out_act.w[this.d0]; // in screen coords
-            const yt = this.net.layers[i + 1].out_act.w[this.d1]; // in screen coords
-            gridx[i].push(xt);
-            gridy[i].push(yt);
+          //ignore first layer
+          for (let i = 1; i < this.nbLayers; i += 1) {
+            const xt = this.net.layers[i].out_act.w[this.d0]; // in screen coords
+            const yt = this.net.layers[i].out_act.w[this.d1]; // in screen coords
+            gridx[i - 1].push(xt);
+            gridy[i - 1].push(yt);
             gridl.push(a.w[0] > a.w[1]); // remember final label as well
           }
         }
@@ -203,16 +214,17 @@ class NetworkCanvasEngine {
 
     if (this.nbLayers > 0) {
       //visctx.strokeStyle = 'rgb(50,50,50)';
+      // TODO: set n for non square canvas
       const n = Math.floor(Math.sqrt(gridx[0].length)); // size of grid. Should be fine?
       const ng = gridx[0].length;
-      this.visCtxArray.forEach((visctx) => visctx.beginPath());
       let xraw1;
       let yraw1;
       let xraw2;
       let yraw2;
-      for (let i = 0; i < this.nbLayers; i += 1) {
-        for (let x = 0; x < n; x += 1) {
-          for (let y = 0; y < n; y += 1) {
+      for (let x = 0; x < n; x += 1) {
+        for (let y = 0; y < n; y += 1) {
+          for (let i = 0; i < this.nbLayers; i += 1) {
+            this.visCtxArray[i].beginPath();
             // down
             let ix1 = x * n + y;
             let ix2 = x * n + 1;
@@ -225,23 +237,19 @@ class NetworkCanvasEngine {
               this.visCtxArray[i].lineTo(xraw2, yraw2);
             }
 
-            // and draw its color
-            if (gridl[ix1]) {
-              this.visCtxArray[i].fillStyle = `rgb(250, ${i * 70},${
-                200 - i * 40
-              })`;
-            } else {
-              this.visCtxArray[i].fillStyle = `rgb(150, ${i * 70},${
-                256 - i * 40
-              })`;
-            }
-            const sz = density * gridstep;
-            this.visCtxArray[i].fillRect(
-              xraw1 - sz / 2 - 1,
-              yraw1 - sz / 2 - 1,
-              sz + 2,
-              sz + 2,
-            );
+            // // and draw its color
+            // if (gridl[ix1]) {
+            //   this.visCtxArray[i].fillStyle = 'rgb(250, 150, 150)';
+            // } else {
+            //   this.visCtxArray[i].fillStyle = 'rgb(150, 250, 150)';
+            // }
+            // const sz = density * gridstep;
+            // this.visCtxArray[i].fillRect(
+            //   xraw1 - sz / 2 - 1,
+            //   yraw1 - sz / 2 - 1,
+            //   sz + 2,
+            //   sz + 2,
+            // );
 
             // right
             ix1 = (x + 1) * n + y;
@@ -261,52 +269,75 @@ class NetworkCanvasEngine {
                 this.visCtxArray[i].lineTo(xraw2, yraw2);
               }
             }
+            this.visCtxArray[i].closePath();
           }
         }
       }
       this.visCtxArray.forEach((visctx) => visctx.stroke());
     }
 
-    // draw datapoints.
-    this.ctx.strokeStyle = 'rgb(0,0,0)';
-    this.ctx.lineWidth = 1;
-    for (let i = 0; i < this.N; i += 1) {
-      if (this.labels[i] === 1) {
-        this.ctx.fillStyle = 'rgb(100,200,100)';
-      } else {
-        this.ctx.fillStyle = 'rgb(200,100,100)';
-      }
+    // // draw datapoints.
+    // this.ctx.strokeStyle = 'rgb(0,0,0)';
+    // this.ctx.lineWidth = 1;
+    // let fillStyle = '';
+    // for (let i = 0; i < this.N; i += 1) {
+    //   if (this.labels[i] === 1) {
+    //     fillStyle = 'rgb(100,200,100)';
+    //   } else {
+    //     fillStyle = 'rgb(200,100,100)';
+    //   }
 
-      this.drawCircle(
-        this.data[i][0] * this.ss + this.width / 2,
-        this.data[i][1] * this.ss + this.height / 2,
-        5.0,
-      );
+    //   this.ctx.fillStyle = fillStyle;
 
-      // also draw transformed data points while we're at it
-      [netx.w[0], netx.w[1]] = this.data[i];
-      var a = this.net.forward(netx, false);
+    //   this.drawCircle(
+    //     this.ctx,
+    //     this.data[i][0] * this.ss + this.width / 2,
+    //     this.data[i][1] * this.ss + this.height / 2,
+    //     3.0,
+    //   );
 
-      for (let i = 0; i < this.nbLayers; i += 1) {
-        const xt =
-          (this.width * (this.net.layers[i].out_act.w[this.d0] - mmx[i].minv)) /
-          mmx[i].dv; // in screen coords
-        const yt =
-          (this.height *
-            (this.net.layers[i].out_act.w[this.d1] - mmy[i].minv)) /
-          mmy[i].dv; // in screen coords
-        if (this.labels[i] === 1) {
-          this.visCtxArray[i].fillStyle = 'rgb(100,200,100)';
-        } else {
-          this.visCtxArray[i].fillStyle = 'rgb(200,100,100)';
-        }
-        this.visCtxArray[i].beginPath();
-        this.visCtxArray[i].arc(xt, yt, 5.0, 0, Math.PI * 2, true);
-        this.visCtxArray[i].closePath();
-        this.visCtxArray[i].stroke();
-        this.visCtxArray[i].fill();
-      }
-    }
+    //   // also draw transformed data points while we're at it
+    //   [netx.w[0], netx.w[1]] = this.data[i];
+    //   var a = this.net.forward(netx, false);
+
+    //   this.visCtxArray.forEach((ctx) => {
+    //     ctx.fillStyle = fillStyle;
+    //   });
+
+    //   for (let i = 0; i < this.nbLayers; i += 1) {
+    //     const xt =
+    //       (this.width *
+    //         (this.net.layers[i + 1].out_act.w[this.d0] - mmx[i].minv)) /
+    //       mmx[i].dv; // in screen coords
+    //     const yt =
+    //       (this.height *
+    //         (this.net.layers[i + 1].out_act.w[this.d1] - mmy[i].minv)) /
+    //       mmy[i].dv; // in screen coords
+
+    //     //alert(`${this.visCtxArray[i].fillStyle} ... ${this.labels[i]}`);
+    //     this.drawCircle(this.visCtxArray[i], xt, yt, 3.0);
+    //   }
+    // }
+  }
+
+  drawTry() {
+    debugger;
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.visCtxArray.forEach((visctx) =>
+      visctx.clearRect(0, 0, this.width, this.height),
+    );
+    this.ctx.fillStyle = 'rgb(0,0,0)';
+    this.visCtxArray.forEach((visctx, i) => {
+      const fill = i * 30;
+      visctx.fillStyle = `rgb(250, 100, ${fill})`;
+      //this.visCtxArray.fillStyle = `rgb(100,100, 100)`;
+      //alert(visctx.fillStyle);
+    });
+    this.drawRect(this.ctx, 0, 0, this.width, this.height);
+    this.visCtxArray.forEach((visctx, i) => {
+      //alert(`i: ${i} i*10: ${i * 10} (i+1)*10: ${(i + 1) * 10}`);
+      this.drawRect(visctx, 0, i * 30, this.width, 30);
+    });
   }
 }
 

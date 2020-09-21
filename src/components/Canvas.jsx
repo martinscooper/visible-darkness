@@ -8,13 +8,12 @@ import {
   CardTitle,
   Button,
 } from 'reactstrap';
-import NetworkCanvasEngine from '../drawing/NetworkCanvasEngine';
 
 const Canvas = (props) => {
   const { nce } = props;
-
   const [nbLayers, setNbLayers] = useState(1);
-  //const [canvasRefs, setCanvasRefs] = useState([]);
+  const canvasRefs = useRef([]);
+  const ppalCanvas = useRef(null);
 
   const addLayer = () => {
     if (nce.getNbLayers() - 1 > nbLayers) {
@@ -22,39 +21,56 @@ const Canvas = (props) => {
     }
   };
 
-  const canvasRefs = Array(nbLayers)
-    .fill()
-    .map((x) => createRef());
-  const pplalCanvas = createRef();
+  const removeLayer = () => {
+    if (nbLayers > 0) {
+      setNbLayers((previous) => previous - 1);
+    } else if (nbLayers === 0) {
+      setNbLayers(0);
+    }
+  };
 
   useEffect(() => {
-    let animationFrameId;
-    // setCanvasRefs((refs) => Array(nbLayers).fill(createRef()));
+    nce.prepareToDraw(ppalCanvas, canvasRefs);
+    nce.updateRefs();
+  }, []);
 
-    //alert(`the size is: ${canvasRefs.length} and nbLayers is: ${nbLayers}`);
-    nce.prepareToDraw(pplalCanvas, canvasRefs);
-    //alert('inside useEffect but not in loop');
+  useEffect(() => {
+    nce.updateRefs();
+
+    let animationFrameId;
     const render = () => {
       nce.update();
       nce.draw();
+      debugger;
+      //nce.drawTry();
       animationFrameId = window.requestAnimationFrame(render);
     };
     render();
+    debugger;
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
   }, [nbLayers]);
 
-  const canvasComps = canvasRefs.map((ref, i) => {
+  if (nbLayers != canvasRefs.current.length) {
+    // add or remove refs
+    canvasRefs.current = Array(nbLayers)
+      .fill()
+      .map((_, i) => {
+        return canvasRefs.current[i] || createRef();
+      });
+  }
+
+  const canvasComps = new Array(nbLayers).fill().map((i, j) => {
     return (
       <Col sm={6} md={4}>
         <Card>
           <CardTitle>
-            <h2> Layer nb {i + 1}</h2>
+            <h2> Layer nb {j + 1}</h2>
           </CardTitle>
           <CardBody>
-            <canvas width='200' height='200' ref={ref} />
+            <canvas width='300' height='300' ref={canvasRefs.current[j]} />
           </CardBody>
         </Card>
       </Col>
@@ -69,6 +85,16 @@ const Canvas = (props) => {
             Add layer
           </Button>
         </Col>
+        <Col>
+          <Button color='primary' onClick={removeLayer}>
+            Remove layer
+          </Button>
+        </Col>
+        <Col>
+          <Button color='danger' onClick={() => nce.reload()}>
+            Reload
+          </Button>
+        </Col>
       </Row>
       <Row>
         <Col sm={6} md={4}>
@@ -77,7 +103,7 @@ const Canvas = (props) => {
               <h2>Network input</h2>
             </CardTitle>
             <CardBody>
-              <canvas width='200' height='200' ref={pplalCanvas} />
+              <canvas width='300' height='300' ref={ppalCanvas} />
             </CardBody>
           </Card>
         </Col>
