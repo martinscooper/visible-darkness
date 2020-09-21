@@ -11,7 +11,7 @@ import {
 
 const Canvas = (props) => {
   const { nce } = props;
-  const [nbLayers, setNbLayers] = useState(1);
+  const [nbLayers, setNbLayers] = useState(6);
   const canvasRefs = useRef([]);
   const ppalCanvas = useRef(null);
 
@@ -64,13 +64,13 @@ const Canvas = (props) => {
 
   const canvasComps = new Array(nbLayers).fill().map((i, j) => {
     return (
-      <Col sm={6} md={4}>
+      <Col sm={6} md={3}>
         <Card>
           <CardTitle>
             <h2> Layer nb {j + 1}</h2>
           </CardTitle>
           <CardBody>
-            <canvas width='300' height='300' ref={canvasRefs.current[j]} />
+            <canvas width='200' height='200' ref={canvasRefs.current[j]} />
           </CardBody>
         </Card>
       </Col>
@@ -97,18 +97,18 @@ const Canvas = (props) => {
         </Col>
       </Row>
       <Row>
-        <Col sm={6} md={4}>
+        <Col sm={6} md={{ size: 4, offset: 4 }}>
           <Card>
             <CardTitle>
               <h2>Network input</h2>
             </CardTitle>
             <CardBody>
-              <canvas width='300' height='300' ref={ppalCanvas} />
+              <canvas width='200' height='200' ref={ppalCanvas} />
             </CardBody>
           </Card>
         </Col>
-        {nbLayers > 0 ? canvasComps : null}
       </Row>
+      <Row>{nbLayers > 0 ? canvasComps : null}</Row>
     </Container>
   );
 };
