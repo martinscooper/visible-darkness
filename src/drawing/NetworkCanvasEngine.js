@@ -5,8 +5,8 @@ class NetworkCanvasEngine {
     this.data = [];
     this.labels = [];
     this.ss = 17.0; // scale for drawing
-    this.d0 = 0;
-    this.d1 = 1;
+    this.d0 = [];
+    this.d1 = [];
     // create neural net
     this.spiralData();
     this.createNetwork();
@@ -17,7 +17,6 @@ class NetworkCanvasEngine {
   prepareToDraw(ppalCanvas, layerCanvasRefs) {
     this.width = ppalCanvas.current.width;
     this.height = ppalCanvas.current.height;
-    //alert(ppalCanvas.current.width);
     this.ctx = ppalCanvas.current.getContext('2d');
     this.layerCanvasRefs = layerCanvasRefs;
   }
@@ -27,6 +26,12 @@ class NetworkCanvasEngine {
       return canvas.current.getContext('2d');
     });
     this.nbLayers = this.visCtxArray.length;
+    this.d0 = new Array(this.nbLayers)
+      .fill(null)
+      .map((d, i) => this.d0[i] || 0);
+    this.d1 = new Array(this.nbLayers)
+      .fill(null)
+      .map((d, i) => this.d1[i] || 1);
   }
 
   maxmin = function (w) {
@@ -50,6 +55,18 @@ class NetworkCanvasEngine {
     }
     return { maxi: maxi, maxv: maxv, mini: mini, minv: minv, dv: maxv - minv };
   };
+
+  getLayerTypes() {
+    return this.net.layers.map((l) => l.layer_type).slice(1);
+  }
+
+  cycle(layer) {
+    var selected_layer = this.net.layers[layer + 1];
+    this.d0[layer] += 1;
+    this.d1[layer] += 1;
+    if (this.d1[layer] >= selected_layer.out_depth) this.d1[layer] = 0; // and wrap
+    if (this.d0[layer] >= selected_layer.out_depth) this.d0[layer] = 0; // and wrap
+  }
 
   circleData() {
     for (let i = 0; i < 50; i += 1) {
@@ -98,7 +115,6 @@ class NetworkCanvasEngine {
       }
     }
     const end = new Date().getTime();
-    //alert(end - start);
   }
 
   drawCircle(ctx, x, y, r) {
@@ -203,8 +219,8 @@ class NetworkCanvasEngine {
           // record the transformation information
           //ignore first layer
           for (let i = 0; i < this.nbLayers; i += 1) {
-            const xt = this.net.layers[i + 1].out_act.w[this.d0]; // in screen coords
-            const yt = this.net.layers[i + 1].out_act.w[this.d1]; // in screen coords
+            const xt = this.net.layers[i + 1].out_act.w[this.d0[i]]; // in screen coords
+            const yt = this.net.layers[i + 1].out_act.w[this.d1[i]]; // in screen coords
             gridx[i][c] = xt;
             gridy[i][c] = yt;
             debugger;
@@ -321,37 +337,15 @@ class NetworkCanvasEngine {
       for (let i = 0; i < this.nbLayers; i += 1) {
         const xt =
           (this.width *
-            (this.net.layers[i + 1].out_act.w[this.d0] - mmx[i].minv)) /
+            (this.net.layers[i + 1].out_act.w[this.d0[i]] - mmx[i].minv)) /
           mmx[i].dv; // in screen coords
         const yt =
           (this.height *
-            (this.net.layers[i + 1].out_act.w[this.d1] - mmy[i].minv)) /
+            (this.net.layers[i + 1].out_act.w[this.d1[i]] - mmy[i].minv)) /
           mmy[i].dv; // in screen coords
-
-        //alert(`${this.visCtxArray[i].fillStyle} ... ${this.labels[i]}`);
         this.drawCircle(this.visCtxArray[i], xt, yt, dpRadius);
       }
     }
-  }
-
-  drawTry() {
-    debugger;
-    this.ctx.clearRect(0, 0, this.width, this.height);
-    this.visCtxArray.forEach((visctx) =>
-      visctx.clearRect(0, 0, this.width, this.height),
-    );
-    this.ctx.fillStyle = 'rgb(0,0,0)';
-    this.visCtxArray.forEach((visctx, i) => {
-      const fill = i * 30;
-      visctx.fillStyle = `rgb(250, 100, ${fill})`;
-      //this.visCtxArray.fillStyle = `rgb(100,100, 100)`;
-      //alert(visctx.fillStyle);
-    });
-    this.drawRect(this.ctx, 0, 0, this.width, this.height);
-    this.visCtxArray.forEach((visctx, i) => {
-      //alert(`i: ${i} i*10: ${i * 10} (i+1)*10: ${(i + 1) * 10}`);
-      this.drawRect(visctx, 0, i * 30, this.width, 30);
-    });
   }
 }
 

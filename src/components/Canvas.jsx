@@ -9,11 +9,19 @@ import {
   Button,
 } from 'reactstrap';
 
+// TODO: make canvas responsive and square
+// TODO: add layer names a types
+// TODO:
+// TODO:
+// TODO:
+// TODO:
+
 const Canvas = (props) => {
   const { nce } = props;
   const [nbLayers, setNbLayers] = useState(6);
   const canvasRefs = useRef([]);
   const ppalCanvas = useRef(null);
+  const layerTypes = nce.getLayerTypes();
 
   const addLayer = () => {
     if (nce.getNbLayers() - 1 > nbLayers) {
@@ -31,7 +39,6 @@ const Canvas = (props) => {
 
   useEffect(() => {
     nce.prepareToDraw(ppalCanvas, canvasRefs);
-    nce.updateRefs();
   }, []);
 
   useEffect(() => {
@@ -64,12 +71,17 @@ const Canvas = (props) => {
 
   const canvasComps = new Array(nbLayers).fill().map((i, j) => {
     return (
-      <Col sm={6} md={3}>
-        <Card>
-          <CardTitle>
-            <h2> Layer nb {j + 1}</h2>
+      <Col sm={6} md={3} className='mt-3'>
+        <Card className='text-center'>
+          <CardTitle className='mb-0'>
+            {layerTypes[j]} layer ({j + 1})
           </CardTitle>
           <CardBody>
+            <Col>
+              <Button className='mb-1' onClick={() => nce.cycle(j)}>
+                Cycle neurons
+              </Button>
+            </Col>
             <canvas width='200' height='200' ref={canvasRefs.current[j]} />
           </CardBody>
         </Card>
@@ -79,7 +91,7 @@ const Canvas = (props) => {
   // TODO: force canvas to depend on parent grid size
   return (
     <Container>
-      <Row className='row-content'>
+      <Row className='mt-3'>
         <Col>
           <Button color='primary' onClick={addLayer}>
             Add layer
@@ -96,9 +108,9 @@ const Canvas = (props) => {
           </Button>
         </Col>
       </Row>
-      <Row>
+      <Row className='mt-3'>
         <Col sm={6} md={{ size: 4, offset: 4 }}>
-          <Card>
+          <Card className='text-center'>
             <CardTitle>
               <h2>Network input</h2>
             </CardTitle>
