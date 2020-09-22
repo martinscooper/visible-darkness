@@ -5,20 +5,26 @@ import {
   Col,
   Card,
   CardBody,
+  CardFooter,
   CardTitle,
   Button,
+  ButtonGroup,
 } from 'reactstrap';
 
 // TODO: make canvas responsive and square
-// TODO: add layer names a types
 // TODO: add select activation options
 // TODO: add learning rate bar
-// TODO: add loss show
 // TODO: add different datasets
+
+const Loss = (props) => {
+  return <CardFooter>Loss: {props.loss}</CardFooter>;
+};
 
 const Canvas = (props) => {
   const { nce } = props;
-  const [nbLayers, setNbLayers] = useState(6);
+  const [nbLayers, setNbLayers] = useState(3);
+  const [loss, setLoss] = useState(0.0);
+
   const canvasRefs = useRef([]);
   const ppalCanvas = useRef(null);
   const layerTypes = nce.getLayerTypes();
@@ -48,8 +54,8 @@ const Canvas = (props) => {
     const render = () => {
       nce.update();
       nce.draw();
+      setLoss(Math.round((nce.getLoss() + Number.EPSILON) * 1000) / 1000);
       debugger;
-      //nce.drawTry();
       animationFrameId = window.requestAnimationFrame(render);
     };
     render();
@@ -78,7 +84,13 @@ const Canvas = (props) => {
           </CardTitle>
           <CardBody>
             <Col>
-              <Button className='mb-1' onClick={() => nce.cycle(j)}>
+              <Button
+                outline
+                color='info'
+                className='mb-1'
+                onClick={() => nce.cycle(j)}
+                size='sm'
+              >
                 Cycle neurons
               </Button>
             </Col>
@@ -102,6 +114,7 @@ const Canvas = (props) => {
                 <CardBody>
                   <canvas width='200' height='200' ref={ppalCanvas} />
                 </CardBody>
+                <Loss loss={loss} />
               </Card>
             </Col>
           </Row>
@@ -109,72 +122,35 @@ const Canvas = (props) => {
         </Col>
         <Col md={2}>
           <Row>
-            <Col md>
-              <Button className='m-1' color='primary' onClick={addLayer}>
-                Add layer
-              </Button>
-            </Col>
-            <Col md>
-              <Button className='m-1' color='primary' onClick={removeLayer}>
-                Remove layer
-              </Button>
-            </Col>
-            <Col md>
-              <Button
-                className='m-1'
-                color='primary'
-                onClick={() => nce.cycleAll()}
-              >
-                Cycle all
-              </Button>
-            </Col>
             <Col>
-              <Button
-                className='m-1'
-                color='danger'
-                onClick={() => nce.reload()}
-              >
-                Reload
-              </Button>
+              <ButtonGroup vertical>
+                <Button className='m-1' color='primary' onClick={addLayer}>
+                  Add layer
+                </Button>
+                <Button className='m-1' color='primary' onClick={removeLayer}>
+                  Remove layer
+                </Button>
+                <Button
+                  className='m-1'
+                  color='primary'
+                  onClick={() => nce.cycleAll()}
+                >
+                  Cycle all
+                </Button>
+                <Button
+                  className='m-1'
+                  color='danger'
+                  onClick={() => nce.reload()}
+                >
+                  Reload
+                </Button>
+              </ButtonGroup>
             </Col>
           </Row>
         </Col>
       </Row>
     </Container>
   );
-  //   <Container>
-  //     <Row className='mt-3'>
-  //       <Col>
-  //         <Button color='primary' onClick={addLayer}>
-  //           Add layer
-  //         </Button>
-  //       </Col>
-  //       <Col>
-  //         <Button color='primary' onClick={removeLayer}>
-  //           Remove layer
-  //         </Button>
-  //       </Col>
-  //       <Col>
-  //         <Button color='danger' onClick={() => nce.reload()}>
-  //           Reload
-  //         </Button>
-  //       </Col>
-  //     </Row>
-  //     <Row className='mt-3'>
-  //       <Col sm={6} md={{ size: 4, offset: 4 }}>
-  //         <Card className='text-center'>
-  //           <CardTitle>
-  //             <h2>Network input</h2>
-  //           </CardTitle>
-  //           <CardBody>
-  //             <canvas width='200' height='200' ref={ppalCanvas} />
-  //           </CardBody>
-  //         </Card>
-  //       </Col>
-  //     </Row>
-  //     <Row>{nbLayers > 0 ? canvasComps : null}</Row>
-  //   </Container>
-  // );
 };
 
 export default Canvas;

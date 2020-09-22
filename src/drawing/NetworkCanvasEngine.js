@@ -12,6 +12,7 @@ class NetworkCanvasEngine {
     this.createNetwork();
     this.ctx = null;
     this.layerCanvasRefs = null;
+    this.loss = 0;
   }
 
   prepareToDraw(ppalCanvas, layerCanvasRefs) {
@@ -111,19 +112,6 @@ class NetworkCanvasEngine {
     this.N = this.data.length;
   }
 
-  update() {
-    const start = new Date().getTime();
-
-    const x = new convnetjs.Vol(1, 1, 2);
-    for (let iters = 0; iters < 20; iters += 1) {
-      for (let ix = 0; ix < this.N; ix += 1) {
-        x.w = this.data[ix];
-        this.trainer.train(x, this.labels[ix]);
-      }
-    }
-    const end = new Date().getTime();
-  }
-
   drawCircle(ctx, x, y, r) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2, true);
@@ -166,7 +154,7 @@ class NetworkCanvasEngine {
     this.net.makeLayers(this.layer_defs);
 
     this.trainer = new convnetjs.SGDTrainer(this.net, {
-      learning_rate: 0.005,
+      learning_rate: 0.01,
       momentum: 0.1,
       batch_size: 10,
       l2_decay: 0.001,
@@ -175,6 +163,26 @@ class NetworkCanvasEngine {
 
   reload() {
     this.createNetwork();
+  }
+
+  getLoss() {
+    return this.loss;
+  }
+
+  update() {
+    const start = new Date().getTime();
+    let avloss = 0;
+    const iters = 10;
+    const x = new convnetjs.Vol(1, 1, 2);
+    for (let i = 0; i < iters; i += 1) {
+      for (let ix = 0; ix < this.N; ix += 1) {
+        x.w = this.data[ix];
+        const stats = this.trainer.train(x, this.labels[ix]);
+        avloss += stats.loss;
+      }
+    }
+    const end = new Date().getTime();
+    this.loss = avloss / (this.N * iters);
   }
 
   draw() {
