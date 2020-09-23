@@ -166,13 +166,13 @@ class NetworkCanvasEngine {
   }
 
   getLoss() {
-    return this.loss;
+    return Math.round((this.loss + Number.EPSILON) * 1000) / 1000;
   }
 
   update() {
     const start = new Date().getTime();
     let avloss = 0;
-    const iters = 10;
+    const iters = 20;
     const x = new convnetjs.Vol(1, 1, 2);
     for (let i = 0; i < iters; i += 1) {
       for (let ix = 0; ix < this.N; ix += 1) {
@@ -238,7 +238,6 @@ class NetworkCanvasEngine {
             const yt = this.net.layers[i + 1].out_act.w[this.d1[i]]; // in screen coords
             gridx[i][c] = xt;
             gridy[i][c] = yt;
-            debugger;
           }
           c++;
           gridl.push(a.w[0] > a.w[1]); // remember final label as well
@@ -258,7 +257,7 @@ class NetworkCanvasEngine {
     }
 
     if (this.nbLayers > 0) {
-      this.visCtxArray.map((visctx) => {
+      this.visCtxArray.forEach((visctx) => {
         visctx.strokeStyle = 'rgb(0, 0, 0)';
       });
 
@@ -271,7 +270,6 @@ class NetworkCanvasEngine {
       let yraw2;
       for (let i = 0; i < this.nbLayers; i += 1) {
         this.visCtxArray[i].beginPath();
-        let c = 0;
         for (let x = 0; x < n; x += 1) {
           for (let y = 0; y < n; y += 1) {
             // down
@@ -343,7 +341,7 @@ class NetworkCanvasEngine {
 
       // also draw transformed data points while we're at it
       [netx.w[0], netx.w[1]] = this.data[i];
-      var a = this.net.forward(netx, false);
+      this.net.forward(netx, false);
 
       this.visCtxArray.forEach((ctx) => {
         ctx.fillStyle = fillStyle;

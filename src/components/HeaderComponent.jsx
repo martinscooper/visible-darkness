@@ -7,14 +7,6 @@ import {
   Collapse,
   NavItem,
   Jumbotron,
-  Button,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  Form,
-  FormGroup,
-  Input,
-  Label,
 } from 'reactstrap';
 import { NavLink } from 'react-router-dom';
 

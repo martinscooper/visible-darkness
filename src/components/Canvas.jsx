@@ -24,10 +24,13 @@ const Canvas = (props) => {
   const { nce } = props;
   const [nbLayers, setNbLayers] = useState(3);
   const [loss, setLoss] = useState(0.0);
-
   const canvasRefs = useRef([]);
   const ppalCanvas = useRef(null);
   const layerTypes = nce.getLayerTypes();
+
+  // alert(
+  //   `component\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
+  // );
 
   const addLayer = () => {
     if (nce.getNbLayers() - 1 > nbLayers) {
@@ -44,40 +47,52 @@ const Canvas = (props) => {
   };
 
   useEffect(() => {
+    // alert(
+    //   `useEffect 1\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
+    // );
     nce.prepareToDraw(ppalCanvas, canvasRefs);
   }, []);
 
   useEffect(() => {
+    // alert(
+    //   `useEffec2 1\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
+    // );
     nce.updateRefs();
 
     let animationFrameId;
     const render = () => {
       nce.update();
       nce.draw();
-      setLoss(Math.round((nce.getLoss() + Number.EPSILON) * 1000) / 1000);
-      debugger;
+      setLoss(nce.getLoss());
       animationFrameId = window.requestAnimationFrame(render);
     };
     render();
-    debugger;
 
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
   }, [nbLayers]);
 
-  if (nbLayers != canvasRefs.current.length) {
+  if (nbLayers !== canvasRefs.current.length) {
     // add or remove refs
+
     canvasRefs.current = Array(nbLayers)
       .fill()
       .map((_, i) => {
         return canvasRefs.current[i] || createRef();
       });
+    // alert(
+    //   `if\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
+    // );
+  } else {
+    // alert(
+    //   `else\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
+    // );
   }
 
   const canvasComps = new Array(nbLayers).fill().map((i, j) => {
     return (
-      <Col sm={6} md={4} className='mt-3'>
+      <Col sm={6} md={4} className='mt-3' key={j}>
         <Card className='text-center'>
           <CardTitle className='mb-0'>
             {layerTypes[j]} layer ({j + 1})
