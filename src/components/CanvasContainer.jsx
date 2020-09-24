@@ -10,30 +10,39 @@ import {
   Button,
   ButtonGroup,
 } from 'reactstrap';
-
+import PropTypes from 'prop-types';
+import NetworkCanvasEngine from '../drawing/NetworkCanvasEngine';
+import useNetworkCanvasEngine from '../hooks/useNetworkCanvasEngine';
 // TODO: make canvas responsive and square
 // TODO: add select activation options
 // TODO: add learning rate bar
 // TODO: add different datasets
+// TODO: cycling neurons when clickin on canvas
+// todo: add addLayer button
 
 const Loss = (props) => {
-  return <CardFooter>Loss: {props.loss}</CardFooter>;
+  const [loss, setLoss] = useState(0.0);
+  useEffect(() => {
+    setInterval(() => {
+      setLoss(props.nce.getLoss());
+    }, 16);
+  }, []);
+  return <CardFooter>Loss: {loss}</CardFooter>;
 };
 
-const Canvas = (props) => {
-  const { nce } = props;
-  const [nbLayers, setNbLayers] = useState(3);
-  const [loss, setLoss] = useState(0.0);
+Loss.propTypes = {
+  nce: PropTypes.instanceOf(NetworkCanvasEngine),
+};
+
+const CanvasContainer = () => {
+  const nce = useNetworkCanvasEngine().current;
+  const [nbLayers, setNbLayers] = useState(nce.getNbLayers());
   const canvasRefs = useRef([]);
   const ppalCanvas = useRef(null);
   const layerTypes = nce.getLayerTypes();
 
-  // alert(
-  //   `component\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
-  // );
-
   const addLayer = () => {
-    if (nce.getNbLayers() - 1 > nbLayers) {
+    if (nce.NbLayers() > nbLayers) {
       setNbLayers((prev) => prev + 1);
     }
   };
@@ -41,29 +50,22 @@ const Canvas = (props) => {
   const removeLayer = () => {
     if (nbLayers > 0) {
       setNbLayers((previous) => previous - 1);
-    } else if (nbLayers === 0) {
-      setNbLayers(0);
     }
   };
 
   useEffect(() => {
-    // alert(
-    //   `useEffect 1\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
-    // );
     nce.prepareToDraw(ppalCanvas, canvasRefs);
   }, []);
 
   useEffect(() => {
-    // alert(
-    //   `useEffec2 1\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
-    // );
     nce.updateRefs();
 
     let animationFrameId;
+    let frameCount = 0;
     const render = () => {
+      frameCount += 1;
       nce.update();
-      nce.draw();
-      setLoss(nce.getLoss());
+      nce.draw(frameCount);
       animationFrameId = window.requestAnimationFrame(render);
     };
     render();
@@ -75,19 +77,11 @@ const Canvas = (props) => {
 
   if (nbLayers !== canvasRefs.current.length) {
     // add or remove refs
-
     canvasRefs.current = Array(nbLayers)
       .fill()
       .map((_, i) => {
         return canvasRefs.current[i] || createRef();
       });
-    // alert(
-    //   `if\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
-    // );
-  } else {
-    // alert(
-    //   `else\nnbLayers: ${nbLayers} \n canvasRefs: ${canvasRefs.current.length}`,
-    // );
   }
 
   const canvasComps = new Array(nbLayers).fill().map((i, j) => {
@@ -115,7 +109,6 @@ const Canvas = (props) => {
       </Col>
     );
   });
-  // TODO: force canvas to depend on parent grid size
   return (
     <Container>
       <Row>
@@ -129,7 +122,7 @@ const Canvas = (props) => {
                 <CardBody>
                   <canvas width='200' height='200' ref={ppalCanvas} />
                 </CardBody>
-                <Loss loss={loss} />
+                <Loss nce={nce} />
               </Card>
             </Col>
           </Row>
@@ -168,4 +161,4 @@ const Canvas = (props) => {
   );
 };
 
-export default Canvas;
+export default CanvasContainer;

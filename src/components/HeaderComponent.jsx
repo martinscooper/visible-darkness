@@ -17,7 +17,7 @@ const Header = () => {
     <>
       <Navbar dark expand='md'>
         <div className='container'>
-          <NavbarToggler onClick={() => setIsNavOpen(!!!isNavOpen)} />
+          <NavbarToggler onClick={() => setIsNavOpen(!isNavOpen)} />
           <NavbarBrand className='mr-auto' href='/'>
             <img
               src={'images/logo.jpeg'}
