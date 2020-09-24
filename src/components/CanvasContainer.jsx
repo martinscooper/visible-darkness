@@ -10,6 +10,7 @@ import {
   Button,
   ButtonGroup,
 } from 'reactstrap';
+import CanvasVis from './CanvasVis';
 import PropTypes from 'prop-types';
 import NetworkCanvasEngine from '../drawing/NetworkCanvasEngine';
 import useNetworkCanvasEngine from '../hooks/useNetworkCanvasEngine';
@@ -17,7 +18,6 @@ import useNetworkCanvasEngine from '../hooks/useNetworkCanvasEngine';
 // TODO: add select activation options
 // TODO: add learning rate bar
 // TODO: add different datasets
-// TODO: cycling neurons when clickin on canvas
 // todo: add addLayer button
 
 const Loss = (props) => {
@@ -42,7 +42,7 @@ const CanvasContainer = () => {
   const layerTypes = nce.getLayerTypes();
 
   const addLayer = () => {
-    if (nce.NbLayers() > nbLayers) {
+    if (nce.getNbLayers() > nbLayers) {
       setNbLayers((prev) => prev + 1);
     }
   };
@@ -87,25 +87,12 @@ const CanvasContainer = () => {
   const canvasComps = new Array(nbLayers).fill().map((i, j) => {
     return (
       <Col sm={6} md={4} className='mt-3' key={j}>
-        <Card className='text-center'>
-          <CardTitle className='mb-0'>
-            {layerTypes[j]} layer ({j + 1})
-          </CardTitle>
-          <CardBody>
-            <Col>
-              <Button
-                outline
-                color='info'
-                className='mb-1'
-                onClick={() => nce.cycle(j)}
-                size='sm'
-              >
-                Cycle neurons
-              </Button>
-            </Col>
-            <canvas width='200' height='200' ref={canvasRefs.current[j]} />
-          </CardBody>
-        </Card>
+        <CanvasVis
+          layerType={layerTypes[j]}
+          layerIx={j}
+          nce={nce}
+          canvasRef={canvasRefs.current[j]}
+        />
       </Col>
     );
   });

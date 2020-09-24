@@ -15,12 +15,12 @@ class NetworkCanvasEngine {
     this.loss = 0;
   }
 
-  getNbLayers() {
-    return this.net.layers.length - 1;
-  }
-
   getLayerTypes() {
     return this.net.layers.map((l) => l.layer_type).slice(1);
+  }
+
+  getNbLayers() {
+    return this.net.layers.length - 1;
   }
 
   getNbVisibleLayers() {
