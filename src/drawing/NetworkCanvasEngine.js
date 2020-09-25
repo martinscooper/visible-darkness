@@ -34,6 +34,10 @@ class NetworkCanvasEngine {
   prepareToDraw(ppalCanvas, layerCanvasRefs) {
     this.width = ppalCanvas.current.width;
     this.height = ppalCanvas.current.height;
+
+    // as all the canvas have the same size
+    this.visWidth = layerCanvasRefs.current[0].current.width;
+    this.visHeight = layerCanvasRefs.current[0].current.height;
     this.ctx = ppalCanvas.current.getContext('2d');
     this.layerCanvasRefs = layerCanvasRefs;
   }
@@ -95,7 +99,7 @@ class NetworkCanvasEngine {
     //clear canvas
     this.ctx.clearRect(0, 0, this.width, this.height);
     this.visCtxArray.forEach((visctx) =>
-      visctx.clearRect(0, 0, this.width, this.height),
+      visctx.clearRect(0, 0, this.visWidth, this.visHeight),
     );
     // this.visCtxArray.forEach((visctx, i) => {
     //   this.drawRect(visctx, 0, i * 30, this.width, 30);
@@ -195,10 +199,14 @@ class NetworkCanvasEngine {
             let ix2 = x * n + y + 1;
 
             if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && y < n - 1) {
-              xraw1 = this.width * ((gridx[i][ix1] - mmx[i].minv) / mmx[i].dv);
-              yraw1 = this.height * ((gridy[i][ix1] - mmy[i].minv) / mmy[i].dv);
-              xraw2 = this.width * ((gridx[i][ix2] - mmx[i].minv) / mmx[i].dv);
-              yraw2 = this.height * ((gridy[i][ix2] - mmy[i].minv) / mmy[i].dv);
+              xraw1 =
+                this.visWidth * ((gridx[i][ix1] - mmx[i].minv) / mmx[i].dv);
+              yraw1 =
+                this.visHeight * ((gridy[i][ix1] - mmy[i].minv) / mmy[i].dv);
+              xraw2 =
+                this.visWidth * ((gridx[i][ix2] - mmx[i].minv) / mmx[i].dv);
+              yraw2 =
+                this.visHeight * ((gridy[i][ix2] - mmy[i].minv) / mmy[i].dv);
               this.visCtxArray[i].moveTo(xraw1, yraw1);
               this.visCtxArray[i].lineTo(xraw2, yraw2);
               c++;
@@ -222,10 +230,14 @@ class NetworkCanvasEngine {
             ix1 = (x + 1) * n + y;
             ix2 = x * n + y;
             if (ix1 >= 0 && ix2 >= 0 && ix1 < ng && ix2 < ng && x < n - 1) {
-              xraw1 = (this.width * (gridx[i][ix1] - mmx[i].minv)) / mmx[i].dv;
-              yraw1 = (this.height * (gridy[i][ix1] - mmy[i].minv)) / mmy[i].dv;
-              xraw2 = (this.width * (gridx[i][ix2] - mmx[i].minv)) / mmx[i].dv;
-              yraw2 = (this.height * (gridy[i][ix2] - mmy[i].minv)) / mmy[i].dv;
+              xraw1 =
+                (this.visWidth * (gridx[i][ix1] - mmx[i].minv)) / mmx[i].dv;
+              yraw1 =
+                (this.visHeight * (gridy[i][ix1] - mmy[i].minv)) / mmy[i].dv;
+              xraw2 =
+                (this.visWidth * (gridx[i][ix2] - mmx[i].minv)) / mmx[i].dv;
+              yraw2 =
+                (this.visHeight * (gridy[i][ix2] - mmy[i].minv)) / mmy[i].dv;
               this.visCtxArray[i].moveTo(xraw1, yraw1);
               this.visCtxArray[i].lineTo(xraw2, yraw2);
               c++;
@@ -270,11 +282,11 @@ class NetworkCanvasEngine {
 
       for (let i = 0; i < this.nbVisibleLayers; i += 1) {
         const xt =
-          (this.width *
+          (this.visWidth *
             (this.net.layers[i + 1].out_act.w[this.d0[i]] - mmx[i].minv)) /
           mmx[i].dv; // in screen coords
         const yt =
-          (this.height *
+          (this.visHeight *
             (this.net.layers[i + 1].out_act.w[this.d1[i]] - mmy[i].minv)) /
           mmy[i].dv; // in screen coords
         this.drawCircle(this.visCtxArray[i], xt, yt, dpRadius);

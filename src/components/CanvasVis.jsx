@@ -12,12 +12,7 @@ const CanvasVis = (props) => {
         {layerType} layer ({layerIx + 1})
       </CardTitle>
       <CardBody>
-        <canvas
-          onClick={handleClick}
-          width='200'
-          height='200'
-          ref={canvasRef}
-        />
+        <canvas onClick={handleClick} className='square' ref={canvasRef} />
       </CardBody>
     </Card>
   );

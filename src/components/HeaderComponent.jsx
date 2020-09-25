@@ -15,7 +15,7 @@ const Header = () => {
 
   return (
     <>
-      <Navbar dark expand='md'>
+      <Navbar dark expand='md' fixed='top'>
         <div className='container'>
           <NavbarToggler onClick={() => setIsNavOpen(!isNavOpen)} />
           <NavbarBrand className='mr-auto' href='/'>
