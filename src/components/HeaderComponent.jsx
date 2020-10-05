@@ -43,9 +43,22 @@ const Header = () => {
             <div className='col-12 col-sm-6'>
               <h1>visible dakness.</h1>
               <p align='justify'>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Phasellus quis nisl urna. Maecenas gravida condimentum ipsum. Ut
-                nec molestie elit.
+                This single page application was just made to explore and
+                practice the front-end development using React and Bootstrap.
+                Also, I wanted to explore how React manages refs to the html
+                document. I am very interested (but a noob) in neural nerwork
+                visualization and new to web development. So this was a perfect
+                opportunity to learn new things. The code to create and train
+                the neural networks use the very useful, yet old, ConvNetJS
+                library. Kharpaty also wrote some{' '}
+                <a href='https://cs.stanford.edu/people/karpathy/convnetjs/'>
+                  fantastic demos.
+                </a>{' '}
+                . What you see bellow is a semi-copy of the{' '}
+                <a href='https://cs.stanford.edu/people/karpathy/convnetjs/demo/classify2d.html'>
+                  "Classify 2d" demo
+                </a>
+                .
               </p>
             </div>
           </div>
