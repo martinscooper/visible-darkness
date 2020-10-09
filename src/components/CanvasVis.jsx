@@ -27,7 +27,7 @@ const CanvasVis = (props) => {
   return (
     <Card>
       <CardTitle className='mb-0'>
-        <Container>
+        <Container fluid>
           <Row>
             <Col>
               <CardText>
@@ -53,7 +53,13 @@ const CanvasVis = (props) => {
         </Container>
       </CardTitle>
       <CardBody className='text-center'>
-        <canvas onClick={handleClick} className='square' ref={canvasRef} />
+        <Row className='flex-container'>
+          <Col>
+            <div className='square'>
+                <canvas className='content'onClick={handleClick} ref={canvasRef} />
+              </div>
+          </Col>
+        </Row>
       </CardBody>
     </Card>
   );

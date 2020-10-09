@@ -86,7 +86,7 @@ const CanvasContainer = () => {
 
   const canvasComps = new Array(nbLayers).fill().map((i, j) => {
     return (
-      <Col xm={12} md={6} className='mt-3' key={j}>
+      <Col xm={12} sm={{ size: 4, offset: 1 }} className='mt-3' key={j}>
         <CanvasVis
           className='canvas'
           layerType={layerTypes[j]}
