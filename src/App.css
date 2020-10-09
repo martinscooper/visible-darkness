@@ -50,3 +50,7 @@
   position: absolute;
   right: 0;
 }
+
+.flex-container {
+  flex: 1 2 auto;
+}
