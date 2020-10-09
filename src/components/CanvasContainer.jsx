@@ -10,7 +10,7 @@ import {
   Button,
   ButtonGroup,
 } from 'reactstrap';
-import CanvasVis from './CanvasVis';
+import LayerVisualization from './LayerVisualization';
 import PropTypes from 'prop-types';
 import NetworkCanvasEngine from '../drawing/NetworkCanvasEngine';
 import useNetworkCanvasEngine from '../hooks/useNetworkCanvasEngine';
@@ -36,22 +36,21 @@ Loss.propTypes = {
 
 const CanvasContainer = () => {
   const nce = useNetworkCanvasEngine().current;
-  const [nbLayers, setNbLayers] = useState(nce.getNbLayers());
+  const nbLayers = (nce.getNbLayers() - 1) / 2;
   const canvasRefs = useRef([]);
   const ppalCanvas = useRef(null);
   const layerTypes = nce.getLayerTypes();
+  // const addLayer = () => {
+  //   if (nce.getNbLayers() > nbLayers) {
+  //     setNbLayers((prev) => prev + 1);
+  //   }
+  // };
 
-  const addLayer = () => {
-    if (nce.getNbLayers() > nbLayers) {
-      setNbLayers((prev) => prev + 1);
-    }
-  };
-
-  const removeLayer = () => {
-    if (nbLayers > 0) {
-      setNbLayers((previous) => previous - 1);
-    }
-  };
+  // const removeLayer = () => {
+  //   if (nbLayers > 0) {
+  //     setNbLayers((previous) => previous - 1);
+  //   }
+  // };
 
   useEffect(() => {
     nce.prepareToDraw(ppalCanvas, canvasRefs);
@@ -77,74 +76,41 @@ const CanvasContainer = () => {
 
   if (nbLayers !== canvasRefs.current.length) {
     // add or remove refs
-    canvasRefs.current = Array(nbLayers)
+    canvasRefs.current = Array(nbLayers * 2)
       .fill()
       .map((_, i) => {
         return canvasRefs.current[i] || createRef();
       });
   }
 
-  const canvasComps = new Array(nbLayers).fill().map((i, j) => {
+  const canvasComps = new Array(nbLayers).fill().map((_, j) => {
     return (
-      <Col xm={12} sm={{ size: 4, offset: 1 }} className='mt-3' key={j}>
-        <CanvasVis
-          className='canvas'
-          layerType={layerTypes[j]}
-          layerIx={j}
-          nce={nce}
-          canvasRef={canvasRefs.current[j]}
-        />
-      </Col>
+      <LayerVisualization
+        className='canvas'
+        layerType={layerTypes[2 * j + 1]}
+        layerIx={2 * j}
+        nce={nce}
+        denseCanvasRef={canvasRefs.current[2 * j]}
+        actCanvasRef={canvasRefs.current[2 * j + 1]}
+      />
     );
   });
   return (
     <Container>
-      <Row>
-        <Col md={10}>
-          <Row>
-            <Col>
-              <Card className='text-center'>
-                <CardTitle>
-                  <h2>Network input</h2>
-                </CardTitle>
-                <CardBody>
-                  <canvas width='200' height='200' ref={ppalCanvas} />
-                </CardBody>
-                <Loss nce={nce} />
-              </Card>
-            </Col>
-          </Row>
-          <Row>{nbLayers > 0 ? canvasComps : null}</Row>
-        </Col>
-        <Col md={2}>
-          <Row>
-            <Col>
-              <ButtonGroup vertical>
-                <Button className='m-1' color='primary' onClick={addLayer}>
-                  Add layer
-                </Button>
-                <Button className='m-1' color='primary' onClick={removeLayer}>
-                  Remove layer
-                </Button>
-                <Button
-                  className='m-1'
-                  color='primary'
-                  onClick={() => nce.cycleAll()}
-                >
-                  Cycle all
-                </Button>
-                <Button
-                  className='m-1'
-                  color='danger'
-                  onClick={() => nce.reload()}
-                >
-                  Reload
-                </Button>
-              </ButtonGroup>
-            </Col>
-          </Row>
+      <Row className='row-content'>
+        <Col>
+          <Card className='text-center'>
+            <CardTitle>
+              <h2>Network input</h2>
+            </CardTitle>
+            <CardBody>
+              <canvas width='200' height='200' ref={ppalCanvas} />
+            </CardBody>
+            <Loss nce={nce} />
+          </Card>
         </Col>
       </Row>
+      {canvasComps}
     </Container>
   );
 };

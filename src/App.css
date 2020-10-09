@@ -18,17 +18,6 @@
   background-color: #000000;
 }
 
-/* .square {
-  width: 100%;
-  position: relative;
-}
-
-.square:after {
-  content: '';
-  display: block;
-  padding-bottom: 100%;
-} */
-
 .square {
   position: relative;
   width: 50%;
@@ -53,4 +42,15 @@
 
 .flex-container {
   flex: 1 2 auto;
+}
+
+.borderColor {
+  border-color: rgb(0, 0, 0);
+  border-width: 1px;
+  border-style: ridge;
+}
+
+body {
+  padding: 50px 0px 0px 0px;
+  z-index: 0;
 }

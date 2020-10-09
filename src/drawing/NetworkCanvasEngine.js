@@ -23,8 +23,8 @@ class NetworkCanvasEngine {
     return this.net.layers.length - 1;
   }
 
-  getNbVisibleLayers() {
-    return this.net.layers.length;
+  getNbLayers() {
+    return this.nbLayers;
   }
 
   getLoss() {
@@ -40,26 +40,27 @@ class NetworkCanvasEngine {
     this.visHeight = layerCanvasRefs.current[0].current.height;
     this.ctx = ppalCanvas.current.getContext('2d');
     this.layerCanvasRefs = layerCanvasRefs;
-  }
-
-  updateRefs() {
+    
     this.visCtxArray = this.layerCanvasRefs.current.map((canvas) => {
       return canvas.current.getContext('2d');
     });
-    this.nbVisibleLayers = this.visCtxArray.length;
-    this.d0 = new Array(this.nbVisibleLayers)
+    this.d0 = new Array(this.nbLayers)
       .fill(null)
       .map((d, i) => this.d0[i] || 0);
-    this.d1 = new Array(this.nbVisibleLayers)
+    this.d1 = new Array(this.nbLayers)
       .fill(null)
       .map((d, i) => this.d1[i] || 1);
+  }
+
+  updateRefs() {
+
   }
 
   createNetwork() {
     this.layer_defs = [];
     this.layer_defs.push({ type: 'input', out_sx: 1, out_sy: 1, out_depth: 2 });
     this.layer_defs.push({ type: 'fc', num_neurons: 6, activation: 'tanh' });
-    this.layer_defs.push({ type: 'fc', num_neurons: 6, activation: 'tanh' });
+    // this.layer_defs.push({ type: 'fc', num_neurons: 6, activation: 'tanh' });
     this.layer_defs.push({ type: 'softmax', num_classes: 2 });
 
     this.net = new convnetjs.Net();
@@ -71,6 +72,9 @@ class NetworkCanvasEngine {
       batch_size: 10,
       l2_decay: 0.001,
     });
+
+    this.nbLayers = this.net.layers.length;
+
   }
 
   reload() {
@@ -110,9 +114,9 @@ class NetworkCanvasEngine {
 
     let netx = new convnetjs.Vol(1, 1, 2);
     let t = new convnetjs.Vol(1, 1, 2);
-    let gridx = new Array(this.nbVisibleLayers);
-    let gridy = new Array(this.nbVisibleLayers);
-    for (let i = 0; i < this.nbVisibleLayers; i += 1) {
+    let gridx = new Array(this.nbLayers);
+    let gridy = new Array(this.nbLayers);
+    for (let i = 0; i < this.nbLayers; i += 1) {
       gridx[i] = new Array(Math.floor(this.width / gridstep));
       gridy[i] = new Array(Math.floor(this.height / gridstep));
     }
@@ -153,7 +157,7 @@ class NetworkCanvasEngine {
         if (cx % gridstep === 0 && cy % gridstep === 0) {
           // record the transformation information
           //ignore first layer
-          for (let i = 0; i < this.nbVisibleLayers; i += 1) {
+          for (let i = 0; i < this.nbLayers-1; i += 1) {
             const xt = this.net.layers[i + 1].out_act.w[this.d0[i]]; // in screen coords
             const yt = this.net.layers[i + 1].out_act.w[this.d1[i]]; // in screen coords
             gridx[i][c] = xt;
@@ -171,12 +175,12 @@ class NetworkCanvasEngine {
     // draw representation transformation axes for two neurons at some layer
     let mmx = [];
     let mmy = [];
-    for (let i = 0; i < this.nbVisibleLayers; i += 1) {
+    for (let i = 0; i < this.nbLayers; i += 1) {
       mmx.push(this.maxmin(gridx[i]));
       mmy.push(this.maxmin(gridy[i]));
     }
 
-    if (this.nbVisibleLayers > 0) {
+    if (this.nbLayers > 0) {
       this.visCtxArray.forEach((visctx) => {
         visctx.strokeStyle = 'rgb(0, 0, 0)';
         visctx.lineWidth = 0.25;
@@ -189,8 +193,7 @@ class NetworkCanvasEngine {
       let yraw1;
       let xraw2;
       let yraw2;
-
-      for (let i = 0; i < this.nbVisibleLayers; i += 1) {
+      for (let i = 0; i < this.nbLayers-1; i += 1) {
         this.visCtxArray[i].beginPath();
         for (let x = 0; x < n; x += 1) {
           for (let y = 0; y < n; y += 1) {
@@ -280,7 +283,7 @@ class NetworkCanvasEngine {
         ctx.strokeStyle = 'rgb(255,255,255)';
       });
 
-      for (let i = 0; i < this.nbVisibleLayers; i += 1) {
+      for (let i = 0; i < this.nbLayers-1; i += 1) {
         const xt =
           (this.visWidth *
             (this.net.layers[i + 1].out_act.w[this.d0[i]] - mmx[i].minv)) /
@@ -326,7 +329,7 @@ class NetworkCanvasEngine {
   }
 
   cycleAll() {
-    for (let i = 0; i < this.nbVisibleLayers; i += 1) {
+    for (let i = 0; i < this.nbLayers; i += 1) {
       this.cycle(i);
     }
     this.reload();
