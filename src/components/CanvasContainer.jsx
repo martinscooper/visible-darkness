@@ -40,18 +40,7 @@ const CanvasContainer = () => {
   const canvasRefs = useRef([]);
   const ppalCanvas = useRef(null);
   const layerTypes = nce.getLayerTypes();
-  // const addLayer = () => {
-  //   if (nce.getNbLayers() > nbLayers) {
-  //     setNbLayers((prev) => prev + 1);
-  //   }
-  // };
-
-  // const removeLayer = () => {
-  //   if (nbLayers > 0) {
-  //     setNbLayers((previous) => previous - 1);
-  //   }
-  // };
-
+  const nbNeuronsPerLayer = nce.getNbNeurons();
   useEffect(() => {
     nce.prepareToDraw(ppalCanvas, canvasRefs);
   }, []);
@@ -88,6 +77,7 @@ const CanvasContainer = () => {
       <LayerVisualization
         className='canvas'
         layerType={layerTypes[2 * j + 1]}
+        nbNeurons={nbNeuronsPerLayer[2 * j]}
         layerIx={2 * j}
         nce={nce}
         denseCanvasRef={canvasRefs.current[2 * j]}
@@ -118,6 +108,13 @@ const CanvasContainer = () => {
         </Col>
       </Row>
       {canvasComps}
+      <Row>
+        <Col xs={12}>
+          <h5>
+            <i className='fa fa-add '></i>Add Layer
+          </h5>
+        </Col>
+      </Row>
     </Container>
   );
 };

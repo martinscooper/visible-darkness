@@ -15,6 +15,10 @@ class NetworkCanvasEngine {
     this.loss = 0;
   }
 
+  getNbNeurons() {
+    return this.net.layers.map((l) => l.out_depth).slice(1);
+  }
+  
   getLayerTypes() {
     return this.net.layers.map((l) => l.layer_type).slice(1);
   }

@@ -54,3 +54,8 @@ body {
 .ppalCanvas {
   max-width: 200px;
 }
+
+.buttons {
+  display: flex;
+  flex: none;
+}
