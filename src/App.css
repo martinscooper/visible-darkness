@@ -40,10 +40,6 @@
   right: 0;
 }
 
-.flex-container {
-  flex: 1 2 auto;
-}
-
 .borderColor {
   border-color: rgb(0, 0, 0);
   border-width: 1px;
@@ -53,4 +49,8 @@
 body {
   padding: 50px 0px 0px 0px;
   z-index: 0;
+}
+
+.ppalCanvas {
+  max-width: 200px;
 }

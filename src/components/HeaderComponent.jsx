@@ -40,7 +40,7 @@ const Header = () => {
       <Jumbotron className='jumbotron'>
         <div className='container'>
           <div className='row row-header'>
-            <div className='col-12 col-sm-6'>
+            <div className='col-12 col-sm-8'>
               <h1>visible dakness.</h1>
               <p align='justify'>
                 This single page application was just made to explore and

@@ -98,13 +98,20 @@ const CanvasContainer = () => {
   return (
     <Container>
       <Row className='row-content'>
-        <Col>
+        <Col xs={{ size: 6, offset: 3 }}>
           <Card className='text-center'>
             <CardTitle>
               <h2>Network input</h2>
             </CardTitle>
             <CardBody>
-              <canvas width='200' height='200' ref={ppalCanvas} />
+              <div className='square'>
+                <canvas
+                  className='content '
+                  width='200'
+                  height='200'
+                  ref={ppalCanvas}
+                />
+              </div>
             </CardBody>
             <Loss nce={nce} />
           </Card>

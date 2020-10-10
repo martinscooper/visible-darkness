@@ -11,6 +11,8 @@ import {
   Container,
   Col,
   Row,
+  CardHeader,
+  CardSubtitle,
 } from 'reactstrap';
 
 const LayerVisualization = (props) => {
@@ -28,30 +30,43 @@ const LayerVisualization = (props) => {
   // };
 
   return (
-    <Row className='my-2 row-content borderColor '>
-      <Col xm={12} md={6} className='borderColor'>
-        <div className='square  '>
-          <canvas
-            className='content'
-            onClick={handleClick}
-            ref={denseCanvasRef}
-            width='200'
-            height='200'
-          />
-        </div>
-      </Col>
-      <Col xm={12} md={6} className='borderColor'>
-        <div className='square'>
-          <canvas
-            className='content'
-            onClick={handleClick}
-            ref={actCanvasRef}
-            width='200'
-            height='200'
-          />
-        </div>
-      </Col>
-    </Row>
+    <Card className='mb-3'>
+      <CardHeader tag='h4' className='text-center'>
+        Layer {layerIx}
+      </CardHeader>
+      <CardBody>
+        <Row className='m-0'>
+          <Col xm={12} md={5} className='d-flex justify-content-center mb-2'>
+            <h5>Nb. neurons: {}</h5>
+          </Col>
+          <Col xm={12} md={5} className='d-flex justify-content-center mb-2'>
+            <h5>Activation: {layerType}</h5>
+          </Col>
+          <Col xm={12} md={5} className='d-flex justify-content-center'>
+            <div className='square'>
+              <canvas
+                className='content '
+                onClick={handleClick}
+                ref={denseCanvasRef}
+                width='400'
+                height='400'
+              />
+            </div>
+          </Col>
+          <Col xm={12} md={5} className='d-flex justify-content-center'>
+            <div className='square'>
+              <canvas
+                className='content '
+                onClick={handleClick}
+                ref={actCanvasRef}
+                width='400'
+                height='400'
+              />
+            </div>
+          </Col>
+        </Row>
+      </CardBody>
+    </Card>
   );
 };
 
