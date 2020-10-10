@@ -37,7 +37,7 @@ const Header = () => {
           </Collapse>
         </div>
       </Navbar>
-      <Jumbotron className='jumbotron'>
+      {/* <Jumbotron className='jumbotron'>
         <div className='container'>
           <div className='row row-header'>
             <div className='col-12 col-sm-8'>
@@ -63,7 +63,7 @@ const Header = () => {
             </div>
           </div>
         </div>
-      </Jumbotron>
+      </Jumbotron> */}
     </>
   );
 };

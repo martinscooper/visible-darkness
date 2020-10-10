@@ -10,15 +10,15 @@ import {
   Button,
   ButtonGroup,
 } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import LayerVisualization from './LayerVisualization';
 import PropTypes from 'prop-types';
 import NetworkCanvasEngine from '../drawing/NetworkCanvasEngine';
 import useNetworkCanvasEngine from '../hooks/useNetworkCanvasEngine';
-// TODO: make canvas responsive and square
-// TODO: add select activation options
 // TODO: add learning rate bar
 // TODO: add different datasets
-// todo: add addLayer button
+// todo: add image for selecting activations functions
 
 const Loss = (props) => {
   const [loss, setLoss] = useState(0.0);
@@ -41,6 +41,11 @@ const CanvasContainer = () => {
   const ppalCanvas = useRef(null);
   const layerTypes = nce.getLayerTypes();
   const nbNeuronsPerLayer = nce.getNbNeurons();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const toggleModal = () => setIsModalOpen(!isModalOpen);
+
   useEffect(() => {
     nce.prepareToDraw(ppalCanvas, canvasRefs);
   }, []);
@@ -82,6 +87,8 @@ const CanvasContainer = () => {
         nce={nce}
         denseCanvasRef={canvasRefs.current[2 * j]}
         actCanvasRef={canvasRefs.current[2 * j + 1]}
+        isModalOpen={isModalOpen}
+        toggleModal={toggleModal}
       />
     );
   });
@@ -97,8 +104,8 @@ const CanvasContainer = () => {
               <div className='square'>
                 <canvas
                   className='content '
-                  width='200'
-                  height='200'
+                  width='300'
+                  height='300'
                   ref={ppalCanvas}
                 />
               </div>
@@ -108,11 +115,11 @@ const CanvasContainer = () => {
         </Col>
       </Row>
       {canvasComps}
-      <Row>
-        <Col xs={12}>
-          <h5>
-            <i className='fa fa-add '></i>Add Layer
-          </h5>
+      <Row className='mt-5'>
+        <Col xs={12} className='text-center'>
+          <Button onClick={toggleModal} color='info' outline rounded-circle>
+            <FontAwesomeIcon icon={faPlus} size='2x'></FontAwesomeIcon>
+          </Button>
         </Col>
       </Row>
     </Container>

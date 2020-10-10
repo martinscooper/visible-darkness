@@ -27,15 +27,14 @@ const LayerVisualization = (props) => {
     nce,
     denseCanvasRef,
     actCanvasRef,
+    isModalOpen,
+    toggleModal,
   } = props;
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const layerIxForDisplaying = layerIx / 2 + 1;
   const cycle = () => {
     nce.cycle(layerIx);
     nce.cycle(layerIx + 1);
   };
-
-  const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   const removeLayer = () => {
     alert('remove layer');
@@ -101,11 +100,7 @@ const LayerVisualization = (props) => {
           </Row>
         </CardBody>
       </Card>
-      <LayerModal
-        isModalOpen={isModalOpen}
-        setIsOpenModal={setIsModalOpen}
-        toggleModal={toggleModal}
-      />
+      <LayerModal isModalOpen={isModalOpen} toggleModal={toggleModal} />
     </div>
   );
 };

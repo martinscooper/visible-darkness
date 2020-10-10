@@ -12,7 +12,7 @@ import {
 } from 'reactstrap';
 
 export const LayerModal = (props) => {
-  const { isModalOpen, setIsModalOpen, toggleModal } = props;
+  const { isModalOpen, toggleModal } = props;
 
   const handleSubmit = (e) => {
     alert('handle login');
@@ -35,7 +35,7 @@ export const LayerModal = (props) => {
             />
           </FormGroup>
           <FormGroup>
-            <Label for='activation'>Password</Label>
+            <Label for='activation'>Activation functions</Label>
             <Input type='select' id='activation' name='activation'>
               <option>Tanh</option>
               <option>Sigmoid</option>
