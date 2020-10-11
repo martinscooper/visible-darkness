@@ -4,27 +4,61 @@ class NetworkCanvasEngine {
   constructor() {
     this.data = [];
     this.labels = [];
-    this.ss = 17.0; // scale for drawing
+    this.ss = 25.0; // scale for drawing
     this.d0 = [];
     this.d1 = [];
     // create neural net
     this.spiralData();
+    this.initNetInfo();
     this.createNetwork();
     this.ctx = null;
     this.layerCanvasRefs = null;
     this.loss = 0;
   }
 
+  initNetInfo() {
+    this.layersInfo = Array();
+
+    this.layersInfo[0] = {
+      nbNeurons: 6,
+      activation: 'tanh',
+    };
+  }
+
+  addLayer(nbNeurons, activation) {
+    this.layersInfo[this.layersInfo.length] = {
+      nbNeurons,
+      activation,
+    };
+    this.reload();
+  }
+
+  removeLayer(layerIx) {
+    this.layersInfo.splice(layerIx - 1, 1);
+    this.reload();
+  }
+
+  modifyLayer(layerIx, nbNeurons, activation) {
+    this.layersInfo[layerIx - 1] = {
+      nbNeurons,
+      activation,
+    };
+    this.reload();
+  }
+
   getNbNeurons() {
     return this.net.layers.map((l) => l.out_depth).slice(1);
   }
-  
+
   getLayerTypes() {
     return this.net.layers.map((l) => l.layer_type).slice(1);
   }
 
-  getNbLayers() {
-    return this.net.layers.length - 1;
+  getDisplayedDimensions(layerIx) {
+    return {
+      d0: this.d0[layerIx],
+      d1: this.d1[layerIx],
+    };
   }
 
   getNbLayers() {
@@ -44,27 +78,24 @@ class NetworkCanvasEngine {
     this.visHeight = layerCanvasRefs.current[0].current.height;
     this.ctx = ppalCanvas.current.getContext('2d');
     this.layerCanvasRefs = layerCanvasRefs;
-    
-    this.visCtxArray = this.layerCanvasRefs.current.map((canvas) => {
-      return canvas.current.getContext('2d');
-    });
-    this.d0 = new Array(this.nbLayers)
-      .fill(null)
-      .map((d, i) => this.d0[i] || 0);
-    this.d1 = new Array(this.nbLayers)
-      .fill(null)
-      .map((d, i) => this.d1[i] || 1);
   }
 
   updateRefs() {
-
+    this.visCtxArray = this.layerCanvasRefs.current.map((canvas) => {
+      return canvas.current.getContext('2d');
+    });
   }
 
   createNetwork() {
     this.layer_defs = [];
     this.layer_defs.push({ type: 'input', out_sx: 1, out_sy: 1, out_depth: 2 });
-    this.layer_defs.push({ type: 'fc', num_neurons: 6, activation: 'tanh' });
-    // this.layer_defs.push({ type: 'fc', num_neurons: 6, activation: 'tanh' });
+    this.layersInfo.map((layer) => {
+      this.layer_defs.push({
+        type: 'fc',
+        num_neurons: layer.nbNeurons,
+        activation: layer.activation,
+      });
+    });
     this.layer_defs.push({ type: 'softmax', num_classes: 2 });
 
     this.net = new convnetjs.Net();
@@ -77,8 +108,13 @@ class NetworkCanvasEngine {
       l2_decay: 0.001,
     });
 
-    this.nbLayers = this.net.layers.length;
-
+    this.nbLayers = this.net.layers.length - 1;
+    this.d0 = new Array(this.nbLayers)
+      .fill(null)
+      .map((d, i) => this.d0[i] || 0);
+    this.d1 = new Array(this.nbLayers)
+      .fill(null)
+      .map((d, i) => this.d1[i] || 1);
   }
 
   reload() {
@@ -114,7 +150,7 @@ class NetworkCanvasEngine {
     // });
 
     const density = 5.0;
-    const gridstep = 2;
+    const gridstep = 3;
 
     let netx = new convnetjs.Vol(1, 1, 2);
     let t = new convnetjs.Vol(1, 1, 2);
@@ -161,7 +197,7 @@ class NetworkCanvasEngine {
         if (cx % gridstep === 0 && cy % gridstep === 0) {
           // record the transformation information
           //ignore first layer
-          for (let i = 0; i < this.nbLayers-1; i += 1) {
+          for (let i = 0; i < this.nbLayers; i += 1) {
             const xt = this.net.layers[i + 1].out_act.w[this.d0[i]]; // in screen coords
             const yt = this.net.layers[i + 1].out_act.w[this.d1[i]]; // in screen coords
             gridx[i][c] = xt;
@@ -197,7 +233,7 @@ class NetworkCanvasEngine {
       let yraw1;
       let xraw2;
       let yraw2;
-      for (let i = 0; i < this.nbLayers-1; i += 1) {
+      for (let i = 0; i < this.nbLayers; i += 1) {
         this.visCtxArray[i].beginPath();
         for (let x = 0; x < n; x += 1) {
           for (let y = 0; y < n; y += 1) {
@@ -287,7 +323,7 @@ class NetworkCanvasEngine {
         ctx.strokeStyle = 'rgb(255,255,255)';
       });
 
-      for (let i = 0; i < this.nbLayers-1; i += 1) {
+      for (let i = 0; i < this.nbLayers; i += 1) {
         const xt =
           (this.visWidth *
             (this.net.layers[i + 1].out_act.w[this.d0[i]] - mmx[i].minv)) /
@@ -301,7 +337,6 @@ class NetworkCanvasEngine {
     }
   }
 
-  //utils
   maxmin(w) {
     if (w.length === 0) {
       return {};
@@ -324,12 +359,13 @@ class NetworkCanvasEngine {
     return { maxi: maxi, maxv: maxv, mini: mini, minv: minv, dv: maxv - minv };
   }
 
-  cycle(layer) {
+  cycle(layer, setDisplayingNeurons) {
     var selected_layer = this.net.layers[layer + 1];
     this.d0[layer] += 1;
     this.d1[layer] += 1;
     if (this.d1[layer] >= selected_layer.out_depth) this.d1[layer] = 0; // and wrap
     if (this.d0[layer] >= selected_layer.out_depth) this.d0[layer] = 0; // and wrap
+    setDisplayingNeurons({ d0: this.d0[layer], d1: this.d1[layer] });
   }
 
   cycleAll() {

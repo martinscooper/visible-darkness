@@ -20,28 +20,30 @@ import {
 import { LayerModal } from './LayerModal';
 
 const LayerVisualization = (props) => {
-  const {
-    layerType,
-    nbNeurons,
-    layerIx,
-    nce,
-    denseCanvasRef,
-    actCanvasRef,
-    isModalOpen,
-    toggleModal,
-  } = props;
+  const { layerIx, nce, denseCanvasRef, actCanvasRef } = props;
+  const layerType = nce.getLayerTypes()[layerIx + 1];
+  const nbNeurons = nce.getNbNeurons()[layerIx];
   const layerIxForDisplaying = layerIx / 2 + 1;
+  const [displayingNeurons, setDisplayingNeurons] = useState({ d0: 0, d1: 1 });
   const cycle = () => {
-    nce.cycle(layerIx);
-    nce.cycle(layerIx + 1);
+    nce.cycle(layerIx, setDisplayingNeurons);
+    nce.cycle(layerIx + 1, setDisplayingNeurons);
   };
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const toggleModal = () => setIsModalOpen(!isModalOpen);
+
   const removeLayer = () => {
-    alert('remove layer');
+    nce.removeLayer(layerIx);
   };
 
   const modify = () => {
     toggleModal();
+  };
+
+  const handleSubmit = (nbNeurons, activation) => {
+    nce.modifyLayer(layerIxForDisplaying, nbNeurons, activation);
   };
 
   // const [dropdownOpen, setdropdownOpen] = useState(false);
@@ -53,16 +55,27 @@ const LayerVisualization = (props) => {
   return (
     <div>
       <Card className='mb-3'>
-        <CardHeader tag='h4' className='text-center'>
-          Layer {layerIxForDisplaying}
+        <CardHeader className='text-center'>
+          <h4>Layer {layerIxForDisplaying}</h4>
+          <p className='font-italic font-weight-lighter'>
+            displaying neurons {displayingNeurons.d0} and {displayingNeurons.d1}
+          </p>
         </CardHeader>
         <CardBody>
           <Row className='m-0'>
             <Col xm={12} md={5} className='d-flex justify-content-center mb-2'>
-              <h6>Nb. neurons: {nbNeurons}</h6>
+              <h6>
+                Nb. neurons:{' '}
+                <span className='font-weight-normal'>{nbNeurons}</span>
+              </h6>
             </Col>
             <Col xm={12} md={5} className='d-flex justify-content-center mb-2'>
-              <h6>Activation: {layerType}</h6>
+              <h6>
+                Activation:{' '}
+                <span className='font-italic font-weight-normal text-capitalize'>
+                  {layerType}
+                </span>
+              </h6>
             </Col>
             <Col xm={12} md={5} className='d-flex justify-content-center mb-3'>
               <div className='square'>
@@ -100,7 +113,12 @@ const LayerVisualization = (props) => {
           </Row>
         </CardBody>
       </Card>
-      <LayerModal isModalOpen={isModalOpen} toggleModal={toggleModal} />
+      <LayerModal
+        modalFunction='Modify'
+        isModalOpen={isModalOpen}
+        toggleModal={toggleModal}
+        handleSubmit={handleSubmit}
+      />
     </div>
   );
 };
