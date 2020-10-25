@@ -4,9 +4,10 @@
 }
 
 .row-content {
-  padding: 1rem 0rem;
+  margin: 0px auto;
+  padding: 1rem;
+  border-bottom: 1px ridge;
 }
-
 .jumbotron {
   margin: 0px auto;
   background: #2a2730;
@@ -21,6 +22,8 @@
 .square {
   position: relative;
   width: 50%;
+  border-color: red;
+  border-width: 5px;
 }
 
 .square:after {
@@ -35,11 +38,6 @@
   height: 100%;
 }
 
-.dropdownbutton {
-  position: absolute;
-  right: 0;
-}
-
 .borderColor {
   border-color: rgb(0, 0, 0);
   border-width: 1px;
@@ -51,11 +49,12 @@ body {
   z-index: 0;
 }
 
-.ppalCanvas {
-  max-width: 200px;
-}
-
 .buttons {
   display: flex;
   flex: none;
+}
+
+.cardTitle {
+  border-width: 1px;
+  border-color: black;
 }

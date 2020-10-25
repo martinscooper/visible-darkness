@@ -54,16 +54,20 @@ const LayerVisualization = (props) => {
 
   return (
     <div>
-      <Card className='mb-3'>
-        <CardHeader className='text-center'>
-          <h4>Layer {layerIxForDisplaying}</h4>
-          <p className='font-italic font-weight-lighter'>
+      <Card className='mb-3 '>
+        <CardHeader className='p-0 text-center'>
+          <h4 className=''>Layer {layerIxForDisplaying}</h4>
+          <p className='font-italic font-weight-lighter mb-0'>
             displaying neurons {displayingNeurons.d0} and {displayingNeurons.d1}
           </p>
         </CardHeader>
         <CardBody>
-          <Row className='m-0'>
-            <Col xm={12} md={5} className='d-flex justify-content-center mb-2'>
+          <Row className='m-0 row-content'>
+            <Col
+              xm={12}
+              md={{ size: 5, offset: 1 }}
+              className='d-flex justify-content-center mb-2'
+            >
               <h6>
                 Nb. neurons:{' '}
                 <span className='font-weight-normal'>{nbNeurons}</span>
@@ -77,7 +81,11 @@ const LayerVisualization = (props) => {
                 </span>
               </h6>
             </Col>
-            <Col xm={12} md={5} className='d-flex justify-content-center mb-3'>
+            <Col
+              xm={12}
+              md={{ size: 5, offset: 1 }}
+              className='d-flex justify-content-center mb-3'
+            >
               <div className='square'>
                 <canvas
                   className='content p-3'
@@ -97,8 +105,8 @@ const LayerVisualization = (props) => {
                 />
               </div>
             </Col>
-            <Col xm={12} md={2} className='d-flex justify-content-center'>
-              <ButtonGroup vertical className='buttons' size='sm'>
+            <Col xm={12} className='d-flex justify-content-center'>
+              <ButtonGroup className='buttons' size='sm'>
                 <Button color='danger' onClick={removeLayer}>
                   Remove layer
                 </Button>

@@ -1,5 +1,11 @@
 import convnetjs from 'convnetjs';
 
+/*
+now that im using a carousel for showing layers
+there is no point in computing the outputs of all layers
+if only one of them is being showed. fuck
+*/
+
 class NetworkCanvasEngine {
   constructor() {
     this.data = [];

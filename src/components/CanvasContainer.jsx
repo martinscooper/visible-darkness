@@ -9,6 +9,11 @@ import {
   CardTitle,
   Button,
   ButtonGroup,
+  Carousel,
+  CarouselItem,
+  CarouselControl,
+  CarouselIndicators,
+  CarouselCaption,
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -28,7 +33,7 @@ const Loss = (props) => {
       setLoss(props.nce.getLoss());
     }, 16);
   }, []);
-  return <CardFooter>Loss: {loss}</CardFooter>;
+  return <CardFooter className='p-0'>Loss: {loss}</CardFooter>;
 };
 
 Loss.propTypes = {
@@ -49,6 +54,26 @@ const CanvasContainer = () => {
 
   const handleSubmit = (nbNeurons, activation) => {
     nce.addLayer(nbNeurons, activation);
+  };
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [animating, setAnimating] = useState(false);
+
+  const next = () => {
+    if (animating) return;
+    const nextIndex = activeIndex === nbLayers - 1 ? 0 : activeIndex + 1;
+    setActiveIndex(nextIndex);
+  };
+
+  const previous = () => {
+    if (animating) return;
+    const nextIndex = activeIndex === 0 ? nbLayers - 1 : activeIndex - 1;
+    setActiveIndex(nextIndex);
+  };
+
+  const goToIndex = (newIndex) => {
+    if (animating) return;
+    setActiveIndex(newIndex);
   };
 
   useEffect(() => {
@@ -81,28 +106,29 @@ const CanvasContainer = () => {
         return canvasRefs.current[i] || createRef();
       });
   }
-  const canvasComps = new Array(nbLayers).fill().map((_, j) => {
+  const layerSlides = new Array(nbLayers).fill().map((_, j) => {
     return (
-      <LayerVisualization
-        className='canvas'
-        // layerType={layerTypes[2 * j + 1]}
-        // nbNeurons={nbNeuronsPerLayer[2 * j]}
-        layerIx={2 * j}
-        nce={nce}
-        denseCanvasRef={canvasRefs.current[2 * j]}
-        actCanvasRef={canvasRefs.current[2 * j + 1]}
-      />
+      <CarouselItem>
+        <LayerVisualization
+          className='canvas'
+          layerIx={2 * j}
+          nce={nce}
+          denseCanvasRef={canvasRefs.current[2 * j]}
+          actCanvasRef={canvasRefs.current[2 * j + 1]}
+        />
+      </CarouselItem>
     );
   });
+
   return (
     <Container>
       <Row className='row-content'>
         <Col xs={{ size: 6, offset: 3 }}>
           <Card className='text-center'>
-            <CardTitle>
-              <h2>Network input</h2>
+            <CardTitle className='mb-0 '>
+              <h3>Network input</h3>
             </CardTitle>
-            <CardBody>
+            <CardBody className='pt-0 '>
               <div className='square'>
                 <canvas
                   className='content '
@@ -116,7 +142,24 @@ const CanvasContainer = () => {
           </Card>
         </Col>
       </Row>
-      {canvasComps}
+      <Carousel activeIndex={activeIndex} next={next} previous={previous}>
+        {/* <CarouselIndicators
+          items={items}
+          activeIndex={activeIndex}
+          onClickHandler={goToIndex}
+        /> */}
+        {layerSlides}
+        <CarouselControl
+          direction='prev'
+          directionText='Previous'
+          onClickHandler={previous}
+        />
+        <CarouselControl
+          direction='next'
+          directionText='Next'
+          onClickHandler={next}
+        />
+      </Carousel>
       <Row className='mt-5'>
         <Col xs={12} className='text-center'>
           <Button
